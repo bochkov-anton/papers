@@ -1,326 +1,94 @@
 \section{Introduction}
+\label{sec:introduction}
 
-\subsection{Queue Workers as Task Execution Systems}
-% Object of analysis: task attempts inside queue-worker execution systems.
-% Worker occupancy introduced briefly.
-% Measurement-level mismatch introduced briefly.
+Queue-based execution is widely used to decouple work production from work
+execution. A producer submits a task instance to a queue, and one or more
+workers later reserve, execute, retry, acknowledge, or fail that work. Although
+this pattern is often presented as a background-job abstraction, production
+queues frequently execute heterogeneous and operationally significant work:
+replication, repair, cache rebuilds, imports, media processing, external service
+calls, validation, notification delivery, and other asynchronous operations.
+In such systems, a worker is not merely a message consumer. It is an execution
+boundary in which logical task attempts consume resources, hold bounded
+capacity, and affect downstream control decisions.
 
-Queue-based execution is a common design pattern for decoupling work production
-from work execution. A producer submits a task instance to a queue, and one or
-more workers later dequeue, reserve, execute, retry, acknowledge, or discard
-that work. In small systems, this mechanism is often treated as a background-job
-abstraction. In production systems, however, queue workers frequently become a
-general execution layer for heterogeneous and operationally significant work:
-data replication, cache rebuilds, database repair, media transformation,
-external service calls, batch imports, validation, notification delivery,
-maintenance jobs, and other forms of asynchronous processing.
+This paper studies profiling at the level of logical task attempts inside
+queue-worker systems. This level is important because the measurements that are
+easier to collect are usually coarser than the behavior that operators need to
+understand. Operating systems and container runtimes expose process-, cgroup-,
+container-, or node-level counters. Queue frameworks expose aggregate backlog,
+latency, failure, and retry metrics. Observability systems expose metrics,
+traces, logs, and runtime profiles. These observations are useful evidence, but
+they do not by themselves explain which task kind or attempt created pressure,
+which task features were relevant, or which execution-context factors amplified
+the observed behavior.
 
-This distinction matters because a queue worker is not merely a consumer of
-messages. It is an execution boundary. Once a task attempt enters a worker, it
-may consume CPU time, memory, disk I/O, network bandwidth, runtime allocations,
-dependency capacity, database connections, leases, locks, semaphores, retry
-budgets, and tenant-level concurrency slots. Some of these costs appear as
-conventional hardware or runtime resource usage. Others are better understood
-as worker-occupancy costs: the attempt holds a worker slot, a lease, a
-connection, or another bounded execution resource for some duration. A task
-attempt that consumes little CPU but occupies a worker slot for a long time may
-reduce effective throughput and increase queueing delay more severely than a
-shorter compute-dominant attempt.
+The central difficulty is that task cost is conditional rather than purely
+intrinsic. A task kind and a payload-size bucket may provide a useful baseline,
+but they do not fully determine resource demand or worker occupancy. For
+example, two replication attempts with similar payloads may behave differently
+when one runs against a healthy replica set and another runs against degraded
+peers, unstable network paths, high retry rates, or disk pressure. The first may
+complete quickly; the second may hold a worker slot, lease, connection, or retry
+budget for much longer. Similar context dependence appears in external API
+fan-out, database repair, compaction, media processing, and other task families
+whose behavior depends on runtime state as well as task input.
 
-The operational unit that profiling must explain is therefore not only the
-worker process, container, or machine. It is the task attempt executed inside a
-queue-worker boundary, together with the task kind, task-instance features, and
-execution context that shaped that attempt. Section~\ref{sec:terminology-notation}
-defines these terms more precisely. Informally, a task kind describes what work
-is requested, a task instance is the concrete queued unit of that kind, and a
-task attempt is one concrete execution of that instance.
+This distinction changes the profiling problem. The system should not ask only
+which telemetry streams can be collected. It must decide which observations are
+semantically relevant for a task kind, how raw observations become model inputs,
+which quantities describe active resource demand, which describe worker
+occupancy, which observations are symptoms or outcomes, and when additional
+instrumentation is worth its overhead. A task that consumes little CPU but holds
+a worker slot for a long time may be more damaging to queue throughput than a
+short compute-dominant task. Conversely, collecting detailed traces for every
+stable, low-risk task can add overhead without improving the decisions that
+matter.
 
-However, the measurements easiest to collect are often not task-attempt-level
-measurements. Operating systems and container runtimes expose CPU, memory,
-I/O, and network counters for processes, cgroups, containers, or nodes. Worker
-frameworks expose aggregate queue depth, worker utilization, task duration,
-failure counts, and retry counts. Observability systems expose metrics, logs,
-traces, and runtime profiles. These observations may show that a worker is
-busy, that a queue is growing, or that a dependency is slow, but they do not by
-themselves explain which task kind, task instance, or task attempt created the
-pressure, which features were relevant, or which context factors amplified the
-observed behavior.
+Existing resource-management and workload-analysis work motivates parts of this
+view. Cluster managers reason about multiple resource dimensions and observed
+usage~\cite{verma2015borg,ghodsi2011drf}; workload studies show heterogeneity,
+dynamic behavior, and task-usage variation at scale
+~\cite{zhang2011taskusage,reiss2012heterogeneity,cheng2018alibaba}; workload
+classification systems infer behavior rather than relying only on static
+resource assumptions~\cite{delimitrou2013paragon,delimitrou2014quasar}; and
+large distributed systems are often shaped by tail behavior rather than average
+case alone~\cite{dean2013tail}. Observability systems provide essential traces,
+metrics, and profiles, but they also introduce overhead and require sampling or
+other budgeted policies~\cite{sigelman2010dapper,opentelemetrySampling,opentelemetryPerformance}.
+These lines of work do not remove the need for a queue-worker-specific model
+that connects logical tasks, execution context, worker occupancy, uncertainty,
+and profiling policy.
 
-This paper therefore treats queue workers as task execution systems rather
-than passive queue consumers. Under this framing, task profiling becomes a
-structured estimation problem: given a task kind, task-instance features, and
-execution-context observations, what resource demand, worker occupancy,
-uncertainty, and operational risk should the system expect for a task attempt,
-and what profiling policy is justified? Different task kinds may require
-different observations, which makes a single universal metric set insufficient.
-The difficulty is deeper, however: even attempts of the same task kind may
-produce substantially different costs under different execution contexts.
+This paper proposes \emph{Task Behavior Graphs} as such a model. A Task Behavior
+Graph is associated with a task kind or task family. Its nodes represent typed
+features, demand dimensions, occupancy dimensions, uncertainty indicators, and
+risk-relevant outputs. Its edges encode explicit influence assumptions such as
+baseline demand, contextual amplification, additive overhead, symptom links,
+outcome links, and risk propagation. The graph is not treated as proof of
+causality. Instead, it makes the model assumptions visible so that they can be
+validated, calibrated, revised, or marked as uncertain.
 
-\subsection{Task Cost Is Conditional, Not Intrinsic}
-% Same task kind and similar task-instance features may have different cost under different context.
-% Intrinsic baseline + contextual amplification + residual uncertainty.
-
-A natural first approximation is to assign a stable cost to a task kind, a
-queue, or a payload-size bucket. Under this approximation, a
-\texttt{replicate-partition} task with a one-gigabyte payload, an image
-transformation task with a fixed input size, or a validation task for a small
-document should have a predictable resource footprint. Resource-aware cluster
-managers already reason about workloads through resource requests,
-constraints, scheduling decisions, and observed usage~\cite{verma2015borg}.
-However, prior work also shows that static or user-provided resource
-assumptions may be insufficient for dynamic workloads. Quasar, for example,
-motivates inferring resource requirements from application behavior and
-performance constraints rather than relying only on user-specified
-reservations~\cite{delimitrou2014quasar}. For queue-worker profiling, this
-implies that task kind and declared size can provide a useful baseline, but
-they should not be treated as the complete cost model.
-
-Consider two task instances of the same replication task kind with the same
-payload size, the same declared operation, and the same nominal priority. The
-first instance is attempted against a healthy replica set with stable network
-connectivity, low peer latency, and small replication lag. It completes in
-roughly one minute. The second instance is attempted against a degraded replica
-set with unstable network connectivity, peer delay, retransmissions, and
-repeated retry or backoff intervals. It occupies a worker slot for fifty
-minutes. The two instances are similar by task kind and declared task
-features, but their attempts are not similar by operational behavior.
-
-The difference is not explained by the intrinsic task description alone. The
-declared intrinsic work may appear similar: read a range of data, transfer or
-apply it to a peer, verify progress, and commit a replication checkpoint. The
-observed behavior, however, is shaped by execution context. Network
-instability can increase transfer time and retries. Peer degradation can
-increase dependency wait time. Replication lag can correlate with a larger
-reconciliation backlog. Disk pressure can delay reads or writes. Worker
-pressure can increase local scheduling delay. The same baseline task kind can
-therefore produce different resource demand and different worker occupancy
-under different contexts. This view is consistent with production workload
-studies that characterize task usage shapes and observe heterogeneous, dynamic
-behavior in large compute clusters~\cite{zhang2011taskusage,reiss2012heterogeneity,cheng2018alibaba}.
-
-This conditional behavior is not specific to replication. A transformation
-task kind may exhibit compute-dominant behavior when record count and algorithm
-mode dominate CPU time, but memory-pressure-sensitive behavior when allocation
-volume or working-set size dominates. A task kind that calls external services
-may be shaped by dependency latency, timeout policy, fan-out width,
-connection-pool availability, and retry behavior. A database repair or cache
-rebuild task kind may depend on hidden state such as segment fragmentation,
-compaction debt, replica divergence, dirty data volume, or disk queue depth.
-Prior workload-classification systems such as Paragon and Quasar also treat
-workload behavior as something that must be classified with respect to
-heterogeneity, interference, or performance constraints rather than inferred
-from a name alone~\cite{delimitrou2013paragon,delimitrou2014quasar}.
-
-Task profiling should therefore not assign a single intrinsic cost to a task
-kind. A useful model must treat task cost as conditional: intrinsic task
-features define a baseline, execution context can amplify or suppress that
-baseline, and residual uncertainty remains when observed behavior is not
-explained by known features. This residual uncertainty matters because rare
-slow executions can dominate system-level behavior in large-scale distributed
-systems~\cite{dean2013tail}. In other words, the profiling problem is not to
-attach a universal cost label to a task kind, but to estimate
-task-kind-specific behavior under a given execution context. Before selecting
-metrics or instrumentation, the system must identify which task-instance
-features and context factors are relevant for the task kind being profiled.
-
-\subsection{Observations Are Not a Profiling Model}
-% Metrics/traces/counters are useful observations.
-% They do not define relevance, influence roles, double counting, feature mapping,
-% or profiling strategy.
-
-Metrics, logs, traces, counters, and runtime profiles are necessary inputs to
-task profiling, but they are not a profiling model by themselves. Distributed
-tracing systems such as Dapper demonstrate the value of tracing for
-understanding large-scale distributed behavior, and modern telemetry systems
-provide structured metrics, traces, and profiles for production
-systems~\cite{sigelman2010dapper,opentelemetryMetricsDataModel}. These
-mechanisms expose observations about execution. They do not, however, define
-which observations are relevant for a particular task kind, which observations
-should be interpreted as context factors, root-cause candidates, symptoms, or
-outcomes, or how observations should be converted into estimates of resource
-demand and worker occupancy.
-
-The relevance problem appears immediately when different task kinds are
-compared. A replication task kind may require observations about network
-condition, peer health, replication lag, retries, and worker-slot time. A
-transformation task kind may require input size, record count, CPU time,
-allocation behavior, and memory pressure. A task kind that calls external
-services may require dependency latency, timeout rate, retry count, and
-connection-pool wait time. A simple validation task kind may require only
-minimal accounting. A flat observation set shared by all task kinds either
-misses important task-specific factors or collects unnecessary signals on the
-hot path.
-
-Raw observations also do not define influence structure. For example, network
-degradation may increase transfer time, dependency latency, retries,
-wall-clock duration, and worker-slot occupancy. Treating network throughput,
-latency, retry count, and wall-clock duration as independent cost factors can
-count the same underlying degradation multiple times. Conversely, treating only
-the final wall-clock duration as the cost hides the mechanism that produced it.
-A profiling model therefore needs to distinguish context factors,
-root-cause candidates, symptoms, outcomes, derived signals, and residuals.
-
-A further gap is feature mapping. A raw observation such as packet loss,
-replica lag, connection-pool wait time, or allocation rate is not yet a model
-input with stable meaning. It must be interpreted, normalized, and mapped into
-a canonical feature such as network instability, replica health, dependency
-capacity pressure, or runtime allocation pressure. Without this layer, two
-domains may use different raw metrics for the same underlying influence, and
-two similar metric names may represent different operational meanings. A task
-profiling model must therefore specify how raw domain-specific observations
-become canonical features used for estimation.
-
-Finally, observations have a cost. Tracing, metric collection,
-high-cardinality labels, runtime profiling, and telemetry export can add CPU,
-memory, allocation, storage, and network overhead. Dapper was explicitly
-designed around low overhead and application-level transparency, and
-OpenTelemetry documentation similarly emphasizes that collecting more telemetry
-can increase overhead and that high-cardinality metric tags can increase memory
-usage~\cite{sigelman2010dapper,opentelemetryPerformance}. Sampling mechanisms,
-including tail sampling, are therefore profiling-policy choices rather than
-properties of observations themselves~\cite{opentelemetrySampling}. A profiling
-system must decide what to observe, at what level of detail, for which task
-kind or attempt, and under which overhead budget.
-
-For these reasons, the problem addressed in this paper is not simply how to
-collect more telemetry. The problem is how to interpret observations as part of
-a task-kind-specific profiling model. The next subsection introduces influence
-domains as the vocabulary for assigning semantic roles to observations and
-Task Behavior Graphs as the structure for connecting those roles within a
-task behavior model.
-
-\subsection{From Influence Domains to Task Behavior Graphs}
-% Influence domains provide vocabulary.
-% Task Behavior Graphs connect domains for task kinds or task families.
-% Task attempts are evaluated through the graph.
-% Output: resource demand, occupancy, uncertainty, risk, profiling policy.
-
-The preceding discussion suggests that task profiling requires more than
-collecting additional observations. A profiling system must know what an
-observation means for a given task kind, whether it describes the task
-identity, intrinsic demand, execution context, resource demand, worker
-occupancy, outcome, uncertainty, or risk, and whether it should affect resource
-estimation, worker-occupancy estimation, uncertainty, or profiling policy. We
-use \emph{influence domains} as the semantic vocabulary for making these
-distinctions.
-
-An influence domain groups model elements by their role in task behavior.
-Intrinsic-demand features describe the work contained in the task instance,
-such as payload size, record count, operation mode, or partition size.
-Execution-context features describe the environment in which a task attempt
-executes, such as network instability, dependency health, replica state, cache
-warmth, disk pressure, or worker pressure. Resource-demand dimensions describe
-active resource use, such as CPU time, memory peak, disk I/O, and network I/O.
-Worker-occupancy dimensions describe bounded execution capacity held by the
-attempt, such as worker-slot time, lease time, connection hold time, lock hold
-time, or tenant-level concurrency time. Outcome, uncertainty, and risk domains
-describe how the attempt completed, how predictable the estimate is, and what
-consequences follow from estimation or control error.
-
-Influence domains provide the vocabulary, but they do not by themselves define
-a model. The model must also describe how domain-specific features influence
-one another for a particular task kind or task family. This paper introduces
-\emph{Task Behavior Graphs} for that purpose. A Task Behavior Graph represents
-a task kind or task family as a typed graph whose nodes belong to influence
-domains and whose edges encode modeled relationships such as baseline demand,
-contextual amplification, additive overhead, derived symptoms, outcome links,
-uncertainty indicators, and risk propagation. The graph is not assumed to prove
-causality by itself; rather, it makes the model's influence assumptions
-explicit so that they can be estimated, validated, calibrated, or revised.
-
-For example, in a replication task kind, payload size may contribute to network
-and disk demand, network instability may amplify retry behavior and
-worker-slot time, and prolonged worker-slot time may increase queue-starvation
-risk. In a transformation task kind, record count and algorithm mode may
-instead dominate CPU time, allocation behavior, and memory pressure, while
-network instability may be irrelevant or only weakly relevant. The graph
-therefore does not encode a universal metric list. It encodes which features
-and relationships are relevant for the task kind or family being modeled.
-
-The graph structure is associated with a task kind or task family rather than
-constructed independently for every task attempt. The task kind or family
-provides the structure: relevant features, resource and occupancy dimensions,
-influence roles, estimated sensitivities, and confidence in those relationships.
-A task instance supplies intrinsic feature values, such as payload size or
-record count. A task attempt supplies execution-context observations, attempt
-state, worker state, and runtime observations. Under the model, graph
-evaluation produces task-kind-specific estimates of resource demand, worker
-occupancy, uncertainty, residuals, and operational risk. A separate
-profiling-policy selector can then use these estimates to choose an
-observation strategy, such as minimal accounting, detailed accounting, sampled
-tracing, tail-aware profiling, diagnostic profiling, or isolated diagnostic
-execution.
-
-This framing also avoids the assumption that a profiling system can maintain a
-globally complete metric list. Different domains may expose different raw
-metrics for the same underlying influence, and different task kinds may require
-different subsets of those influences. Instead of requiring every metric to be
-known by the core model, Task Behavior Graphs operate over canonical features.
-Domain-specific metrics can be mapped into these features through task behavior
-manifests and domain packs, while unexplained behavior remains visible as
-residual error and reduced confidence. The result is a task-kind-specific
-profiling model: raw observations are interpreted through influence domains,
-connected through a behavior graph, and used to select the amount and kind of
-profiling justified for the task attempt.
-
-\subsection{Contributions and Paper Organization}
-% Contributions and roadmap.
-
-This paper argues that queue-worker task profiling should be treated as a
-task-kind-specific behavior modeling problem rather than as a problem of
-collecting more raw telemetry. The central claim is that task attempts should
-be profiled through a model that separates task identity, intrinsic demand,
-execution context, resource demand, worker occupancy, uncertainty, and
-operational risk. Within this framing, the paper makes the following
-contributions.
-
-First, we define a task cost model for queue workers that separates intrinsic
-demand, contextual amplification, additive overhead, worker occupancy, and
-residual uncertainty. This model treats task cost as conditional behavior
-rather than as a fixed scalar attached to a task kind, queue, or
-payload-size bucket.
-
-Second, we introduce influence domains as a semantic decomposition of
-queue-worker task behavior. These domains distinguish task identity, intrinsic
-demand, execution context, resource demand, worker occupancy, outcomes,
-uncertainty, risk, and profiling observations. The purpose of this
-decomposition is to avoid flat metric lists, separate context factors from
-symptoms and outcomes, and make explicit which kinds of observations are
-relevant for a task kind.
-
-Third, we propose Task Behavior Graphs as a task-kind- or
-task-family-level representation that connects canonical features across
-influence domains. A Task Behavior Graph describes how intrinsic task features
-and execution-context factors contribute to resource demand, worker occupancy,
-uncertainty, and operational risk. The graph provides the structure, while
-task instances and attempts provide concrete feature values, context
-observations, outcomes, and residuals for evaluation.
-
-Fourth, we describe a metrics-to-features model based on feature registries,
-metric descriptors, task behavior manifests, and domain packs. This mechanism
-allows domain-specific raw observations to be mapped into canonical features
-without requiring a globally complete metric list in the core profiling model.
-It also makes missing or unexplained influences visible through residual error
-and reduced confidence.
-
-Fifth, we outline a profiling-policy selection flow that uses predictability,
-context sensitivity, worker occupancy, operational consequences, and profiling
-overhead to choose an appropriate observation strategy. Depending on the task
-kind, attempt context, and risk profile, the selected strategy may range from
-minimal accounting to detailed accounting, sampled tracing, tail-aware
-profiling, diagnostic profiling, or isolated diagnostic execution.
+The paper makes five contributions. First, it frames queue-worker task profiling
+as conditional behavior estimation rather than raw telemetry collection. Second,
+it separates intrinsic task features, execution context, active resource demand,
+worker occupancy, uncertainty, and operational risk into distinct model roles.
+Third, it introduces Task Behavior Graphs as a task-kind- or task-family-level
+representation for connecting these roles. Fourth, it describes how raw metrics,
+traces, logs, profiles, and domain events can be mapped into canonical features
+through descriptors, manifests, and domain-specific extensions. Fifth, it
+outlines how profiling policy can be selected from task behavior, uncertainty,
+consequence, and instrumentation budget.
 
 The remainder of the paper is organized as follows.
-Section~\ref{sec:terminology-notation} defines the terminology and notation
-used throughout the paper. Sections~\ref{sec:background} and
-\ref{sec:problem-statement} introduce the background and formulate the
-profiling problem. Sections~\ref{sec:task-cost-model} through
-\ref{sec:task-behavior-graphs} define the cost model, influence domains, task
-taxonomy, and Task Behavior Graphs. Sections~\ref{sec:metrics-signals-features}
-through~\ref{sec:profiling-policy-selection} describe observation mapping,
-profiling methods, worker observation points, uncertainty, risk, and
-profiling-policy selection. Section~\ref{sec:task-behavior-manifests}
-introduces task behavior manifests and domain packs, and
-Section~\ref{sec:case-studies} applies the model to representative task kinds.
-The remaining sections discuss evaluation methodology, limitations, validity
-threats, related work, and conclusions.
+Section~\ref{sec:terminology-notation} defines the core terminology and
+notation. Section~\ref{sec:background} provides the technical background and
+motivation. Section~\ref{sec:problem-statement} states the profiling problem.
+Sections~\ref{sec:task-cost-model}--\ref{sec:task-behavior-graphs} introduce
+the cost model, influence domains, taxonomy, and graph representation.
+Sections~\ref{sec:metrics-signals-features}--\ref{sec:profiling-policy-selection}
+discuss feature mapping, profiling methods, observation points, uncertainty,
+risk, and policy selection. Section~\ref{sec:task-behavior-manifests} describes
+manifests and domain packs, and Section~\ref{sec:case-studies} applies the model
+to representative task kinds. The final sections discuss evaluation,
+limitations, related work, and conclusions.
