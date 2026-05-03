@@ -1,0 +1,189 @@
+\section{Background and Motivation}
+\label{sec:background}
+
+This section provides the technical background needed for the problem statement.
+It does not introduce the full model. Its purpose is to explain why
+queue-worker task profiling cannot be reduced to process-level monitoring,
+queue-level metrics, or generic tracing. The section first identifies the task
+attempt as the relevant execution unit. It then separates the roles that are
+most often conflated: attempt-side resource demand, attempt-side worker
+occupancy, environment-side execution context, observed symptoms, and downstream
+risk. Finally, it motivates feature mapping and budgeted profiling.
+
+\subsection{Queue-Worker Execution and Task Attempts}
+\label{sec:background-queue-worker-execution}
+
+Queue-worker systems execute work through a lifecycle that usually includes
+enqueue, reserve or dequeue, start, processing, retry or backoff when needed,
+commit or output write, and acknowledgement or failure. A single task instance
+can produce multiple attempts because of retry policy, lease expiration, timeout,
+cancellation, worker failure, or rescheduling. Each attempt may execute under a
+different worker state, dependency state, retry state, or domain state.
+
+The attempt is therefore the most precise unit for attributing execution
+behavior. A task kind describes the semantic type of requested work. A task
+instance describes one queued unit of that kind. A task attempt describes one
+concrete execution of that instance under one execution context. Resource usage,
+worker occupancy, outcome, and residual error are usually measured or estimated
+most cleanly at this boundary. Aggregating only by queue, worker process, or node
+can reveal pressure, but it can hide which task kind, attempt, or context
+produced the observed behavior.
+
+A worker may hold capacities that are not visible as high active utilization.
+During an attempt it may hold a worker slot, task lease, dependency connection,
+lock, semaphore permit, or tenant-level concurrency slot. These held capacities
+are occupancy outputs attributed to the attempt. They are different from the
+surrounding worker or worker-pool state. For example, a worker pool may already
+be close to saturation before an attempt starts; that pool state is execution
+context. If the attempt then holds one worker slot for thirty seconds, that
+duration is worker-slot occupancy attributed to the attempt.
+
+\subsection{Resource Demand, Worker Occupancy, and Context Pressure}
+\label{sec:background-demand-occupancy-pressure}
+
+Distributed resource-management systems commonly reason about multiple resource
+dimensions rather than a single scalar load. Cluster managers and allocation
+policies account for dimensions such as CPU, memory, storage, and other capacity
+constraints when placing, admitting, or allocating work
+\cite{verma2015borg,ghodsi2011drf}. Queue-worker profiling inherits this
+multi-resource setting, but adds a task-attribution problem: the model must
+distinguish active resource demand, worker occupancy, and context pressure.
+
+Active resource demand describes resources required or consumed by the attempt
+itself, such as CPU time, memory peak, allocation volume, disk reads and writes,
+network transfer volume, or accelerator use. Worker occupancy describes bounded
+execution capacity held by the attempt over time, such as worker-slot time,
+lease time, connection hold time, lock hold time, semaphore hold time, or tenant
+concurrency time. Context pressure describes the surrounding state that may
+influence the attempt, such as CPU saturation, memory pressure, disk queue depth,
+network instability, dependency saturation, connection-pool pressure, or
+worker-pool utilization.
+
+These roles are related by influence, not by identity. A degraded dependency may
+increase dependency wait time. That wait may increase worker-slot time if the
+slot remains held during the wait. The same degradation may also increase retry
+count or wall-clock duration. In this chain, dependency health is a context
+factor, dependency wait time is an observed intermediate duration, retry count
+and wall-clock duration are symptoms or outcomes, and worker-slot time is an
+occupancy cost only when the slot remains held. Treating all of them as the same
+quantity would obscure attribution and double-count one underlying degradation.
+
+Demand must also be separated from pressure. CPU demand is not CPU pressure;
+disk I/O demand is not disk pressure; network transfer volume is not network
+instability; worker-slot time is not worker-pool pressure. Demand and occupancy
+are attempt-attributed quantities. Pressure is an input-side state of the
+environment. A profiling model should preserve these roles before projecting
+them into any score used by a scheduler, admission controller, or profiling
+policy.
+
+\subsection{Workload Variability and Context Dependence}
+\label{sec:background-workload-variability}
+
+Production workloads are heterogeneous and dynamic. Prior studies of large
+compute clusters and co-located workloads show substantial variation in task
+usage, infrastructure conditions, and workload behavior across time, machines,
+and task populations
+\cite{zhang2011taskusage,reiss2012heterogeneity,cheng2018alibaba}. Workload
+classification systems such as Paragon and Quasar similarly motivate inferring
+behavior from observed properties and performance constraints rather than
+relying only on static declarations or user-provided reservations
+\cite{delimitrou2013paragon,delimitrou2014quasar}. For queue workers, the
+implication is direct: task kind, queue name, and declared size can provide a
+baseline, but not a complete behavior model.
+
+A replication task illustrates the issue. Two attempts may have the same task
+kind and similar payload size, but execute against different replica sets. Under
+stable network conditions and healthy peers, the attempt may complete near its
+baseline. Under degraded peer health, packet loss, high replication lag, disk
+pressure, or retry backoff, the same logical operation may produce larger
+worker-slot time or connection hold time. The task did not become a different
+task kind. Its execution context changed, and that context amplified selected
+cost dimensions.
+
+Other task families expose different sensitivities. A transformation task may be
+mostly shaped by record count, algorithm mode, CPU pressure, allocation behavior,
+and memory pressure. An external-service task may be shaped by dependency
+health, fan-out width, timeout policy, connection-pool availability, and retry
+state. A repair, compaction, cache rebuild, or migration task may be shaped by
+hidden domain state such as fragmentation, dirty data volume, replica divergence,
+cache warmth, or disk queue depth. A useful profiling model must therefore ask
+which features are relevant for a task kind rather than impose one global metric
+set on all tasks.
+
+Average behavior is not enough. Large-scale distributed systems are often shaped
+by tail behavior and stragglers \cite{dean2013tail,dean2004mapreduce}. In a
+queue-worker system, rare attempts that hold worker slots, leases, locks, or
+dependency connections for unusually long periods can reduce effective capacity
+and increase queueing delay even when mean duration appears acceptable. This
+motivates estimates that preserve distributional behavior when tails affect
+control decisions.
+
+\subsection{Observations and Feature Mapping}
+\label{sec:background-observability-feature-mapping}
+
+Metrics, traces, logs, runtime profiles, and domain events provide evidence
+about execution. Distributed tracing systems such as Dapper and modern telemetry
+systems expose spans, metrics, and runtime observations that help engineers
+understand distributed behavior
+\cite{sigelman2010dapper,opentelemetryMetricsDataModel}. However, an observation
+does not carry its model role by default. A metric, span, or log record does not
+intrinsically say whether it is task identity, an intrinsic feature, a context
+factor, a resource measurement, an occupancy measurement, a symptom, an outcome,
+or a risk indicator.
+
+Feature mapping is the layer that assigns those roles. Raw observations such as
+packet loss, replica lag, connection-pool wait time, timeout rate, allocation
+volume, or lock hold duration must be normalized and mapped into canonical
+features or observed output values before they can feed a reusable model.
+Different domains may expose different raw signals for similar influences, and
+similar metric names may carry different meanings in different systems. A model
+that operates over canonical features can separate domain integration from
+behavior evaluation.
+
+This role assignment is necessary to avoid double counting. Network degradation,
+dependency wait, retry count, wall-clock duration, and worker-slot time may all
+co-occur in the same incident. A model should not treat them as independent root
+causes. It should represent which signal describes the context, which signal is
+an intermediate symptom, which signal is an observed cost dimension, and which
+downstream effect is a risk-relevant consequence.
+
+\subsection{Profiling Overhead and Observation Policy}
+\label{sec:background-profiling-overhead}
+
+Observation has cost. Instrumentation, tracing, runtime profiling,
+high-cardinality labels, sampling decisions, and telemetry export can add CPU
+work, allocations, memory pressure, storage volume, and network traffic. Dapper
+was designed with low overhead as a central concern, and OpenTelemetry treats
+sampling and telemetry performance as operational constraints
+\cite{sigelman2010dapper,opentelemetrySampling,opentelemetryPerformance}.
+Collecting more observations is therefore not automatically better.
+
+The right observation strategy depends on the task kind, uncertainty, expected
+consequence, and instrumentation budget. Stable, low-consequence tasks may need
+only minimal accounting. Unknown, high-tail, context-sensitive, or
+high-consequence tasks may justify detailed accounting, sampled tracing,
+tail-aware capture, or diagnostic profiling. The instrumentation used to
+understand a system should not become an unbounded source of work or cardinality.
+
+\subsection{Motivating Gap}
+\label{sec:background-motivating-gap}
+
+The preceding points expose a gap between available observations and the model
+needed for queue-worker task profiling. Resource-management systems reason about
+multiple resources; workload studies show variability and context dependence;
+observability systems expose metrics, traces, logs, and profiles. These pieces
+do not by themselves specify how to attribute behavior to logical task attempts,
+separate intrinsic demand from execution context, account for worker occupancy,
+assign semantic roles to observations, or choose instrumentation under an
+overhead budget.
+
+The gap becomes clearer when tasks are compositional. A single task kind may
+include CPU processing, network transfer, dependency calls, retries, commits,
+and cleanup. Some quantities compose by summation, others by maximum, critical
+path, retry expansion, or occupancy-specific rules. Without an explicit model of
+metric roles and composition semantics, the system cannot reliably combine
+component behavior into an attempt-level estimate.
+
+The next section states this gap as a profiling problem. Later sections define
+the cost model, influence domains, task taxonomy, Task Behavior Graphs, feature
+mapping, and profiling-policy selection as a structured response.

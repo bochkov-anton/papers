@@ -1,0 +1,186 @@
+\begin{longtable}{TD}
+\caption{Notation used throughout the paper.}
+\label{tab:notation}\\
+
+\toprule
+Symbol & Meaning \\
+\midrule
+\endfirsthead
+
+\toprule
+Symbol & Meaning \\
+\midrule
+\endhead
+
+\bottomrule
+\endfoot
+
+\termrow{$\mathcal{K}$}{
+The set of task kinds.
+}
+
+\termrow{$\mathcal{I}$}{
+The set of task instances.
+}
+
+\termrow{$\mathcal{A}$}{
+The set of task attempts.
+}
+
+\termrow{$i \in \mathcal{I}$}{
+A task instance.
+}
+
+\termrow{$a \in \mathcal{A}$}{
+A task attempt.
+}
+
+\termrow{$k(i) \in \mathcal{K}$}{
+The task kind of task instance $i$.
+}
+
+\termrow{$i(a) \in \mathcal{I}$}{
+The task instance executed by attempt $a$.
+}
+
+\termrow{$k_a$}{
+A shorthand for $k(i(a))$, the task kind of attempt $a$.
+}
+
+\termrow{$\mathcal{D}$}{
+The set of influence domains.
+}
+
+\termrow{$\mathcal{F}$}{
+The set of canonical features.
+}
+
+\termrow{$z_a$}{
+The canonical feature vector available for attempt $a$ after feature mapping
+and normalization.
+}
+
+\termrow{$\mathbf{x}_a$}{
+The intrinsic-feature projection of $z_a$, containing task-instance features
+such as payload size, record count, batch size, operation mode, or other
+domain-specific work descriptors.
+}
+
+\termrow{$\mathbf{c}_a$}{
+The execution-context projection of $z_a$, containing context features such as
+worker state, node pressure, dependency health, network condition, disk
+pressure, cache state, retry state, tenant pressure, or domain-specific state.
+}
+
+\termrow{$\mathcal{R}$}{
+The set of active resource-demand dimensions.
+}
+
+\termrow{$\mathcal{O}$}{
+The set of worker-occupancy dimensions.
+}
+
+\termrow{$\mathcal{Q}$}{
+The set of cost dimensions, defined as $\mathcal{Q} = \mathcal{R} \cup
+\mathcal{O}$.
+}
+
+\termrow{$q \in \mathcal{Q}$}{
+A cost dimension, either a resource-demand dimension or a worker-occupancy
+dimension.
+}
+
+\termrow{$\widehat{D}_r(a)$}{
+Estimated resource demand for resource dimension $r \in \mathcal{R}$ during
+attempt $a$.
+}
+
+\termrow{$\widehat{U}_o(a)$}{
+Estimated worker occupancy for occupancy dimension $o \in \mathcal{O}$ during
+attempt $a$.
+}
+
+\termrow{$\widehat{\mathbf{D}}(a)$}{
+The resource-demand estimate vector for attempt $a$.
+}
+
+\termrow{$\widehat{\mathbf{U}}(a)$}{
+The worker-occupancy estimate vector for attempt $a$.
+}
+
+\termrow{$\widehat{\mathbf{C}}(a)$}{
+The structured attempt-level cost estimate, represented as
+$(\widehat{\mathbf{D}}(a), \widehat{\mathbf{U}}(a))$.
+}
+
+\termrow{$\widehat{Y}_q(a)$}{
+The estimated value for cost dimension $q \in \mathcal{Q}$ during attempt $a$.
+This is a dimension-generic notation used when the same expression applies to
+both resource-demand and worker-occupancy dimensions.
+}
+
+\termrow{$Y_q(a)$}{
+The observed attempt-attributed value for cost dimension $q$, when such an
+observation is available. For $q \in \mathcal{R}$ this is observed resource
+usage; for $q \in \mathcal{O}$ this is observed worker occupancy.
+}
+
+\termrow{$\widehat{B}_q$}{
+The estimated intrinsic baseline function for cost dimension $q$.
+}
+
+\termrow{$\widehat{A}_q$}{
+The estimated contextual amplification factor for cost dimension $q$.
+}
+
+\termrow{$\widehat{O}_q$}{
+The estimated additive overhead function for cost dimension $q$.
+}
+
+\termrow{$\epsilon_q(a)$}{
+Residual error for cost dimension $q$, defined when $Y_q(a)$ is available as
+$Y_q(a) - \widehat{Y}_q(a)$.
+}
+
+\termrow{$\widehat{Y}_{q,p}(a)$}{
+The estimated $p$-quantile or percentile-level value for cost dimension $q$
+during attempt $a$.
+}
+
+\termrow{$\mathrm{Risk}(a)$}{
+The operational-risk estimate for attempt $a$.
+}
+
+\termrow{$\mathcal{G}_k$}{
+The Task Behavior Graph associated with task kind $k$.
+}
+
+\termrow{$V_k$}{
+The set of nodes in Task Behavior Graph $\mathcal{G}_k$.
+}
+
+\termrow{$E_k$}{
+The set of edges in Task Behavior Graph $\mathcal{G}_k$.
+}
+
+\termrow{$v \in V_k$}{
+A node in Task Behavior Graph $\mathcal{G}_k$.
+}
+
+\termrow{$e \in E_k$}{
+An edge in Task Behavior Graph $\mathcal{G}_k$.
+}
+
+\termrow{$\delta(v)$}{
+The influence domain assigned to graph node $v$.
+}
+
+\termrow{$w_e$}{
+The estimated sensitivity or weight associated with graph edge $e$.
+}
+
+\termrow{$\gamma_e$}{
+The confidence value associated with graph edge $e$.
+}
+
+\end{longtable}
