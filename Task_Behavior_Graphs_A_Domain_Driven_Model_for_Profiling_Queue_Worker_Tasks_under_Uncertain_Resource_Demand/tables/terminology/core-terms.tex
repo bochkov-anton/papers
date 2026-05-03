@@ -1,0 +1,130 @@
+\begin{longtable}{TD}
+\caption{Core terms used in the main model.}
+\label{tab:core-terms}\\
+
+\toprule
+Term & Definition \\
+\midrule
+\endfirsthead
+
+\toprule
+Term & Definition \\
+\midrule
+\endhead
+
+\bottomrule
+\endfoot
+
+\termrow{task}{
+A generic unit of work handled by a queue-worker system. The term is used only
+when the distinction between task kind, task instance, and task attempt is not
+important.
+}
+
+\termrow{task kind}{
+The semantic type of work submitted to a queue. A task kind describes what work
+is requested, but it does not fully determine resource demand, worker
+occupancy, or risk under every execution context.
+}
+
+\termrow{task instance}{
+A concrete logical unit of work placed into a queue. A task instance belongs to
+a task kind and may produce one or more execution attempts.
+}
+
+\termrow{task attempt}{
+One concrete execution of a task instance. Retries, lease expiration, worker
+failure, cancellation, or rescheduling may cause a single task instance to have
+multiple attempts. Resource usage, worker occupancy, observations, outcomes,
+and residuals are usually measured or estimated at attempt granularity.
+}
+
+\termrow{worker}{
+An executor that dequeues, reserves, executes, retries, acknowledges, discards,
+or fails task attempts. In this paper, a worker is treated as an execution
+boundary rather than merely a message consumer.
+}
+
+\termrow{task behavior}{
+The observed or estimated execution pattern of a task attempt or task kind
+under a given execution context, including resource demand, worker occupancy,
+outcome, uncertainty, and risk-relevant effects.
+}
+
+\termrow{execution context}{
+The environment and state under which a task attempt executes. Execution
+context includes worker state, node pressure, dependency health, network
+condition, disk pressure, cache state, tenant pressure, retry state, and other
+runtime or domain-specific conditions.
+}
+
+\termrow{observation}{
+Any measurement, event, trace, profile sample, counter, log entry, or
+domain-specific signal exposed by a queue, worker runtime, operating system,
+container runtime, dependency, tracing system, or domain component.
+}
+
+\termrow{canonical feature}{
+A typed and normalized model input derived from task metadata, execution
+context, raw observations, or signals. Task Behavior Graphs operate over
+canonical features rather than arbitrary raw metrics.
+}
+
+\termrow{influence domain}{
+A semantic role assigned to a feature, observation, output, or model concept.
+Influence domains separate task identity, intrinsic demand, execution context,
+resource demand, worker occupancy, outcome, uncertainty, risk, and profiling
+observations.
+}
+
+\termrow{resource demand}{
+The expected or required active resource need of a task attempt along a
+resource dimension, such as CPU time, memory peak, disk I/O, network I/O,
+runtime allocation, or accelerator usage. Resource demand is what the model
+estimates before or during execution.
+}
+
+\termrow{resource usage}{
+The observed actual use of a resource during execution. Resource usage is
+measured after or during execution and is distinct from estimated demand.
+}
+
+\termrow{worker occupancy}{
+Bounded execution capacity held by a task attempt over time, such as
+worker-slot time, lease time, connection hold time, lock hold time, semaphore
+hold time, or tenant-level concurrency time.
+}
+
+\termrow{worker-slot time}{
+The time during which a task attempt holds a worker execution slot. This is the
+core worker-occupancy dimension in queue-worker systems.
+}
+
+\termrow{uncertainty}{
+Unreliability or unpredictability of a task behavior estimate. Uncertainty may
+come from missing features, hidden state, measurement error, drift, heavy tails,
+multimodality, or insufficient history.
+}
+
+\termrow{operational risk}{
+The consequence-weighted danger of underestimating, misclassifying, or
+mishandling a task attempt. Operational risk is modeled separately from task
+cost.
+}
+
+\termrow{Task Behavior Graph}{
+A typed graph associated with a task kind or task family. It connects canonical
+features across influence domains and supports estimation of resource demand,
+worker occupancy, uncertainty, and operational risk. A Task Behavior Graph
+makes modeled influence assumptions explicit; it is not assumed to prove
+causality by itself.
+}
+
+\termrow{profiling policy}{
+The selected observation and instrumentation strategy for a task kind, task
+attempt, or execution context. A profiling policy may choose minimal
+accounting, detailed accounting, tracing, sampling, tail-aware profiling,
+diagnostic profiling, or isolated diagnostic execution.
+}
+
+\end{longtable}

@@ -69,10 +69,17 @@ Network bytes, packets, requests, or transfer volume associated with a task
 attempt. Network I/O is distinct from network instability.
 }
 
+\termrow{wait time}{
+Time spent waiting rather than actively consuming a hardware or runtime
+resource. Wait time may be caused by dependencies, locks, network transfer,
+backoff, throttling, local scheduling delay, or other blocking conditions.
+}
+
 \termrow{dependency wait time}{
 Time spent waiting for an external dependency, such as a database, API, remote
-service, or storage system. Dependency wait time can increase worker occupancy
-without increasing CPU time.
+service, or storage system. Dependency wait time is not active resource demand
+by itself, but it can increase wall-clock duration and worker occupancy when
+bounded worker capacity remains held during the wait.
 }
 
 \termrow{worker occupancy}{

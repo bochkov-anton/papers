@@ -16,9 +16,9 @@ Term & Definition \\
 \endfoot
 
 \termrow{influence domain}{
-A semantic role assigned to a feature, observation, or output in the task
-behavior model. Influence domains are not metric domains: they group model
-elements by role rather than by telemetry source.
+A semantic role assigned to a feature, observation, output, or model concept in
+the task behavior model. Influence domains are not metric domains: they group
+model elements by role rather than by telemetry source.
 }
 
 \termrow{task identity domain}{
@@ -42,13 +42,17 @@ disk pressure, cache warmth, worker pressure, and retry state.
 \termrow{resource demand domain}{
 The influence domain describing active resource dimensions required or consumed
 by the task attempt, such as CPU time, memory peak, disk I/O, network I/O,
-dependency wait time, runtime allocations, or accelerator usage.
+runtime allocations, or accelerator usage. Waiting on dependencies is not
+active resource demand by itself, although it can contribute to worker
+occupancy and operational risk.
 }
 
 \termrow{worker occupancy domain}{
 The influence domain describing bounded execution capacity held by the task
 attempt, such as worker-slot time, lease time, connection hold time, lock hold
-time, semaphore hold time, or tenant concurrency time.
+time, semaphore hold time, or tenant concurrency time. Wait-related dimensions
+such as dependency wait time may contribute to this domain when a task keeps
+bounded worker capacity while waiting.
 }
 
 \termrow{outcome domain}{
