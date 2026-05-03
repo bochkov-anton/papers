@@ -5,9 +5,10 @@ This section provides the technical background needed for the problem statement.
 It does not introduce the full model. Instead, it explains why queue-worker task
 profiling cannot be reduced to process-level monitoring, queue-level metrics, or
 generic tracing. The section first identifies the task attempt as the relevant
-execution unit, then separates resource demand from worker occupancy and
-execution-context pressure. It then motivates conditional behavior, semantic
-feature mapping, and budgeted profiling.
+execution unit. It then separates three roles that are often conflated:
+attempt-side resource demand, attempt-side worker occupancy, and
+environment-side execution-context pressure. Finally, it motivates conditional
+behavior, semantic feature mapping, and budgeted profiling.
 
 \subsection{Queue-Worker Execution and Task Attempts}
 \label{sec:background-queue-worker-execution}
@@ -17,8 +18,8 @@ enqueue, reserve or dequeue, start, one or more processing stages, retry or
 backoff when needed, commit or output write, and acknowledgement or failure. A
 single task instance can produce multiple attempts because of retry policy,
 lease expiration, timeout, cancellation, worker failure, or rescheduling. For
-profiling, this matters because each attempt may observe a different worker
-state, dependency state, retry state, and domain state.
+profiling, this matters because each attempt may execute under a different
+worker state, dependency state, retry state, or domain state.
 
 The attempt is therefore the most precise unit for attributing observed
 behavior. A task kind describes the semantic type of requested work, and a task
@@ -26,14 +27,17 @@ instance describes one queued unit of that kind. The attempt describes one
 concrete execution under one execution context. Resource usage, worker
 occupancy, outcome, and residual error are usually measured or estimated most
 cleanly at this attempt boundary. Aggregating only by queue, worker process, or
-node can hide which task kind or context produced the observed pressure.
+node can reveal pressure, but it can hide which task kind, attempt, or context
+produced the observed behavior.
 
-A worker also holds capacities that are not always visible as high utilization.
-During an attempt it may hold a worker slot, task lease, connection, lock,
-semaphore permit, retry budget, or tenant-level concurrency slot. These
-capacities can constrain throughput even when active CPU use is low. As a
-result, queue-worker profiling must explain not only what resources an attempt
-consumes, but also what bounded execution capacity it occupies and for how long.
+A worker may hold capacities that are not visible as high active utilization.
+During an attempt it may hold a worker slot, task lease, dependency connection,
+lock, semaphore permit, or tenant-level concurrency slot. These held capacities
+are worker-occupancy outputs of the attempt. They should be distinguished from
+the surrounding worker or worker-pool pressure. For example, a worker pool may
+already be 90\% occupied before an attempt starts; that pool state is execution
+context. If the attempt then holds one worker slot for 30 seconds, that duration
+is worker-slot occupancy attributed to the attempt.
 
 \subsection{Resource Demand, Occupancy, and Pressure}
 \label{sec:background-demand-occupancy-pressure}
@@ -44,26 +48,37 @@ policies account for dimensions such as CPU, memory, storage, and other capacity
 constraints when placing, admitting, or allocating work
 \cite{verma2015borg,ghodsi2011drf}. Queue-worker profiling inherits this
 multi-resource setting, but adds an important distinction: active resource
-demand and worker occupancy are different kinds of cost.
+demand, worker occupancy, and execution-context pressure are different roles.
 
 Active resource demand describes resources consumed by the attempt itself, such
 as CPU time, memory peak, allocation volume, disk reads and writes, network
 transfer volume, or accelerator use. Worker occupancy describes bounded
 execution capacity held over time, such as worker-slot time, lease time,
 connection hold time, lock hold time, semaphore hold time, or tenant concurrency
-time. These dimensions are related but not interchangeable. A compute-dominant
-attempt may consume CPU intensely for a short interval. A dependency-bound
-attempt may consume little CPU while holding a worker slot and a connection for
-much longer.
+time. Execution-context pressure describes the surrounding state that may
+influence the attempt, such as CPU saturation, memory pressure, disk queue
+depth, network instability, dependency saturation, connection-pool pressure, or
+worker-pool utilization.
+
+These roles are related but not interchangeable. A compute-dominant attempt may
+consume CPU intensely for a short interval. A dependency-bound attempt may
+consume little CPU while holding a worker slot and a connection for much longer.
+A degraded dependency may increase dependency wait time, which may in turn
+increase worker-slot time if the slot remains held during the wait. In that
+chain, dependency health is a context factor, dependency wait time is a symptom
+or intermediate duration, and worker-slot time is an occupancy cost. Treating
+all three as the same quantity would obscure both attribution and control
+semantics.
 
 Demand must also be separated from pressure. Demand is a property estimated or
-observed for the attempt. Pressure is a property of the execution context, such
-as CPU saturation, memory pressure, disk queue depth, network instability,
-dependency saturation, or worker-pool utilization. Confusing demand with
-pressure makes it unclear whether an attempt is intrinsically expensive,
-contextually amplified, or merely observed under degraded conditions. A profiling
-model should therefore preserve demand dimensions, occupancy dimensions, and
-context-pressure features before projecting them into any policy-specific score.
+observed for the attempt. Pressure is a property of the execution context. CPU
+demand is not CPU pressure; disk I/O demand is not disk pressure; network
+transfer volume is not network instability; and worker-slot time is not
+worker-pool pressure. Confusing these terms makes it unclear whether an attempt
+is intrinsically expensive, contextually amplified, or merely observed under
+degraded conditions. A profiling model should therefore preserve demand
+dimensions, occupancy dimensions, and context-pressure features before
+projecting them into any policy-specific score.
 
 \subsection{Workload Variability and Context Dependence}
 \label{sec:background-workload-variability}
@@ -85,28 +100,28 @@ kind and similar payload size, but execute against different replica sets. Under
 stable network conditions and healthy peers, the attempt may complete near its
 baseline. Under degraded peer health, packet loss, retransmissions, high
 replication lag, disk pressure, or retry backoff, the same logical operation can
-produce much larger worker-slot time and a different risk profile. The task did
-not become a different task kind; its behavior changed because the execution
-context amplified some dimensions and not others.
+produce larger worker-slot time and a different risk profile. The task did not
+become a different task kind. Its execution context changed, and that context
+amplified some cost dimensions.
 
 The same pattern appears in other task families. A transformation task may be
-mostly shaped by record count, algorithm mode, CPU pressure, allocation behavior,
-and memory pressure. An external-service task may be shaped by dependency
-health, fan-out width, timeout policy, connection-pool availability, and retry
-state. A repair, compaction, cache rebuild, or migration task may be shaped by
-hidden domain state such as fragmentation, dirty data volume, replica divergence,
-cache warmth, or disk queue depth. A useful profiling model must therefore ask
-which features are relevant for a task kind, rather than impose one global
-metric set on all tasks.
+mostly shaped by record count, algorithm mode, CPU pressure, allocation
+behavior, and memory pressure. An external-service task may be shaped by
+dependency health, fan-out width, timeout policy, connection-pool availability,
+and retry state. A repair, compaction, cache rebuild, or migration task may be
+shaped by hidden domain state such as fragmentation, dirty data volume, replica
+divergence, cache warmth, or disk queue depth. A useful profiling model must
+therefore ask which features are relevant for a task kind rather than impose one
+global metric set on all tasks.
 
 Average behavior is not enough. Large-scale distributed systems are often shaped
 by tail behavior and stragglers~\cite{dean2013tail,dean2004mapreduce}. In a
 queue-worker system, rare attempts that hold worker slots, leases, locks, or
 dependency connections for unusually long periods can reduce effective capacity
-and increase queueing delay even when the mean duration appears acceptable.
-This motivates estimating not only central tendency but also uncertainty,
-residual error, drift, and high-percentile behavior when those signals affect
-control decisions.
+and increase queueing delay even when mean duration appears acceptable. This
+motivates estimating not only central tendency but also uncertainty, residual
+error, drift, and high-percentile behavior when those signals affect control
+decisions.
 
 \subsection{Observability Signals and Feature Mapping}
 \label{sec:background-observability-feature-mapping}
@@ -121,21 +136,24 @@ intrinsically say whether it is a task feature, a context factor, a resource
 measurement, an occupancy measurement, a symptom, an outcome, or a risk
 indicator.
 
-This distinction prevents double counting and unclear attribution. For example,
-network degradation may contribute to dependency wait, retry count,
-wall-clock duration, and worker-slot occupancy. Treating all of these as
-independent causes can count one underlying degradation multiple times. Treating
-only the final duration as cost has the opposite problem: it hides the mechanism
-that produced the delay. A task-profiling model needs semantic roles so that raw
-observations can be interpreted consistently.
+This distinction prevents double counting and unclear attribution. Network
+degradation may contribute to dependency wait, retry count, wall-clock duration,
+and worker-slot occupancy. These observations are connected, but they do not
+have the same role. Network degradation is a context factor. Retry count is an
+outcome or symptom of repeated execution. Wall-clock duration is elapsed time
+between boundaries. Worker-slot time is occupancy only if the attempt holds a
+worker slot during that elapsed interval. Treating all of them as independent
+causes can count one underlying degradation multiple times. Treating only the
+final duration as cost has the opposite problem: it hides the mechanism that
+produced the delay.
 
-Feature mapping is the layer that provides this interpretation. Raw observations
-such as packet loss, replica lag, connection-pool wait time, timeout rate, or
-allocation volume must be normalized and mapped into canonical features before
-they can feed a reusable model. Different domains may expose different raw
-signals for similar influences, and similar metric names may carry different
-meaning in different systems. A model that operates over canonical features can
-separate domain integration from behavior evaluation.
+Feature mapping is the layer that provides semantic interpretation. Raw
+observations such as packet loss, replica lag, connection-pool wait time,
+timeout rate, or allocation volume must be normalized and mapped into canonical
+features before they can feed a reusable model. Different domains may expose
+different raw signals for similar influences, and similar metric names may carry
+different meanings in different systems. A model that operates over canonical
+features can separate domain integration from behavior evaluation.
 
 \subsection{Profiling Overhead and Observation Policy}
 \label{sec:background-profiling-overhead}

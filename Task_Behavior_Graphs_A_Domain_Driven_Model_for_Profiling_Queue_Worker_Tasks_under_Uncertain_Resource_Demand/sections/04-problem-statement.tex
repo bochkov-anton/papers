@@ -13,7 +13,10 @@ its task kind, task-instance features, execution-context observations, and
 available history, while respecting profiling overhead. The estimate must not be
 reduced to a single scalar cost. It must preserve active resource demand,
 worker occupancy, uncertainty, and operational risk as distinct outputs because
-these quantities support different operational decisions.
+these quantities support different operational decisions. Throughout this
+section, execution context denotes input-side environmental state; resource
+demand and worker occupancy denote cost-side outputs attributed to the attempt;
+and operational risk denotes downstream consequence.
 
 \subsection{System Model}
 \label{sec:problem-system-model}
@@ -33,12 +36,14 @@ commits, acknowledgement, and cleanup. These phases may be sequential,
 parallel, conditional, retried, or partially overlapping. The paper does not
 assume that every phase is perfectly instrumented.
 
-Each attempt executes under an execution context. The context may include worker
-state, node pressure, dependency health, network condition, disk pressure, cache
-state, replica state, tenant pressure, retry state, and domain-specific hidden
-state. Some context factors are directly observable, some are derived from raw
-observations, and some remain hidden. Hidden or missing factors are represented
-indirectly through residual error, uncertainty, and reduced confidence.
+Each attempt executes under an execution context. The context is not the cost of
+the attempt. It is the surrounding state that may influence the cost. The
+context may include worker state, worker-pool pressure, node pressure,
+dependency health, network condition, disk pressure, cache state, replica state,
+tenant pressure, retry state, and domain-specific hidden state. Some context
+factors are directly observable, some are derived from raw observations, and
+some remain hidden. Hidden or missing factors are represented indirectly through
+residual error, uncertainty, and reduced confidence.
 
 The model is task-kind-specific. Different task kinds may require different
 features, different observation points, and different profiling policies. A
@@ -70,6 +75,9 @@ pressure, node CPU or memory pressure, disk queue depth, network instability,
 dependency health, connection-pool pressure, cache warmth, replica health,
 replication lag, tenant quota usage, and retry state. These observations may be
 fresh, stale, missing, aggregated, or only indirectly related to the attempt.
+They are input-side conditions, not worker-occupancy values. For example,
+connection-pool pressure is context; connection hold time attributed to the
+attempt is occupancy.
 
 Fourth, historical observations describe previous attempts of the same or
 related task kinds. They may include observed resource usage, worker occupancy,
@@ -100,7 +108,9 @@ $\widehat{U}_o(a)$ or a distribution over possible values. Relevant dimensions
 may include worker-slot time, lease time, connection hold time, lock hold time,
 semaphore hold time, and tenant concurrency time. Occupancy is modeled
 separately because an attempt can hold scarce execution capacity without
-consuming much active CPU or memory.
+consuming much active CPU or memory. Occupancy is also separate from
+execution-context pressure: worker-pool pressure may influence an attempt, while
+worker-slot time is capacity held by that attempt.
 
 The third output is uncertainty and confidence. The model should indicate how
 reliable its estimates are, whether residual error is expected to be high,
@@ -114,8 +124,8 @@ The fourth output is operational risk. Risk is not the same as task cost. It
 captures the consequence of underestimating, misclassifying, or mishandling an
 attempt. Relevant risks may include queue starvation, retry amplification,
 SLO violation, replication lag, tenant impact, dependency overload, and
-cascading overload. Risk depends not only on estimated demand but also on the
-blast radius and the operational meaning of the task kind.
+cascading overload. Risk depends not only on estimated demand and occupancy but
+also on the blast radius and the operational meaning of the task kind.
 
 The fifth output is a profiling-policy recommendation. Given the task kind,
 context, uncertainty, risk, and profiling budget, the system should determine
@@ -151,8 +161,10 @@ whether they represent intrinsic work, execution context, active resource usage,
 worker occupancy, a symptom, an outcome, an uncertainty indicator, or a risk
 indicator. Without explicit semantic roles, a model may double-count related
 signals. For example, network instability, retry count, wall-clock duration,
-and worker-slot time may all reflect one underlying degradation, but they should
-not be treated as independent causes.
+and worker-slot time may all reflect one degraded dependency path, but they
+should not be treated as independent causes. Network instability is context;
+retry count and wall-clock duration are symptoms or outcomes; worker-slot time
+is occupancy if the slot remains held.
 
 The fifth challenge is compositional behavior. A task kind may include multiple
 behavior components, such as CPU processing, network transfer, dependency calls,

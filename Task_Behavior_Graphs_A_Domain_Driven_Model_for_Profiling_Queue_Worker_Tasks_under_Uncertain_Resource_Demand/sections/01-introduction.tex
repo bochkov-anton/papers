@@ -9,8 +9,8 @@ queues frequently execute heterogeneous and operationally significant work:
 replication, repair, cache rebuilds, imports, media processing, external service
 calls, validation, notification delivery, and other asynchronous operations.
 In such systems, a worker is not merely a message consumer. It is an execution
-boundary in which logical task attempts consume resources, hold bounded
-capacity, and affect downstream control decisions.
+boundary in which logical task attempts consume active resources, hold bounded
+execution capacity, and affect downstream control decisions.
 
 This paper studies profiling at the level of logical task attempts inside
 queue-worker systems. This level is important because the measurements that are
@@ -18,32 +18,44 @@ easier to collect are usually coarser than the behavior that operators need to
 understand. Operating systems and container runtimes expose process-, cgroup-,
 container-, or node-level counters. Queue frameworks expose aggregate backlog,
 latency, failure, and retry metrics. Observability systems expose metrics,
-traces, logs, and runtime profiles. These observations are useful evidence, but
-they do not by themselves explain which task kind or attempt created pressure,
-which task features were relevant, or which execution-context factors amplified
-the observed behavior.
+traces, logs, and runtime profiles. These observations provide evidence, but
+they do not by themselves identify which task kind or attempt created pressure,
+which task features were relevant, or which execution-context factors changed
+the behavior of that attempt.
+
+A central distinction in this paper is between conditions, costs, and
+consequences. Execution context denotes the surrounding state under which an
+attempt executes: worker state, node pressure, dependency health, network
+condition, disk pressure, cache state, retry state, tenant pressure, or other
+domain-specific state. Resource demand and worker occupancy are different: they
+are cost-side outputs attributed to the attempt. Resource demand describes
+active resource need, such as CPU time or network transfer. Worker occupancy
+describes bounded execution capacity held over time, such as worker-slot time,
+lease time, connection hold time, or lock hold time. Operational risk is a
+downstream consequence of underestimating, misclassifying, or mishandling an
+attempt; it is not itself the execution cost.
 
 The central difficulty is that task cost is conditional rather than purely
 intrinsic. A task kind and a payload-size bucket may provide a useful baseline,
 but they do not fully determine resource demand or worker occupancy. For
 example, two replication attempts with similar payloads may behave differently
 when one runs against a healthy replica set and another runs against degraded
-peers, unstable network paths, high retry rates, or disk pressure. The first may
-complete quickly; the second may hold a worker slot, lease, connection, or retry
-budget for much longer. Similar context dependence appears in external API
-fan-out, database repair, compaction, media processing, and other task families
-whose behavior depends on runtime state as well as task input.
+peers, unstable network paths, high retry rates, or disk pressure. These
+conditions are execution-context factors. Their effect may be observed as higher
+dependency wait time, longer worker-slot time, more retries, or higher residual
+error. The context and the observed cost are related, but they are not the same
+quantity.
 
 This distinction changes the profiling problem. The system should not ask only
 which telemetry streams can be collected. It must decide which observations are
 semantically relevant for a task kind, how raw observations become model inputs,
-which quantities describe active resource demand, which describe worker
-occupancy, which observations are symptoms or outcomes, and when additional
-instrumentation is worth its overhead. A task that consumes little CPU but holds
-a worker slot for a long time may be more damaging to queue throughput than a
-short compute-dominant task. Conversely, collecting detailed traces for every
-stable, low-risk task can add overhead without improving the decisions that
-matter.
+which quantities describe active resource demand, which quantities describe
+worker occupancy, which observations are symptoms or outcomes, and when
+additional instrumentation is worth its overhead. A task that consumes little CPU
+but holds a worker slot or dependency connection for a long time may be more
+damaging to queue throughput than a short compute-dominant task. Conversely,
+collecting detailed traces for every stable, low-risk task can add overhead
+without improving the decisions that matter.
 
 Existing resource-management and workload-analysis work motivates parts of this
 view. Cluster managers reason about multiple resource dimensions and observed

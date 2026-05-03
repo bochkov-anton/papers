@@ -7,12 +7,18 @@ reference glossary is deferred to Appendix~\ref{app:extended-terminology} so
 that the main text can proceed from the problem statement to the model without
 front-loading implementation and lifecycle details.
 
-The central distinction is that a task kind describes what work is requested,
-whereas task behavior describes how that work executes under a particular
-execution context. Raw observations provide evidence, canonical features feed
-the model, influence domains assign semantic roles, and Task Behavior Graphs
-connect features across domains to estimate demand, occupancy, uncertainty,
-and risk.
+The terminology is role-specific. Task identity and intrinsic task features
+describe what work is requested. Execution context describes the environment and
+state under which an attempt executes. Resource demand and worker occupancy are
+cost-side outputs attributed to the attempt. Observations provide evidence;
+canonical features are typed model inputs derived from observations or metadata.
+Uncertainty and operational risk are downstream interpretations of estimates,
+residuals, missing information, and consequences. These roles are kept distinct
+because the same operational event can connect several roles without making them
+synonyms. For example, degraded dependency health is an execution-context
+factor; dependency wait time is an observed symptom or intermediate duration;
+connection hold time and worker-slot time are occupancy dimensions; and queue
+starvation is a possible operational risk.
 
 \subsection{Core Terms}
 \label{sec:core-terms}
