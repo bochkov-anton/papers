@@ -1,0 +1,106 @@
+\begin{longtable}{TD}
+\caption{Task Behavior Graph terms.}
+\label{tab:terms-task-behavior-graphs}\\
+
+\toprule
+Term & Definition \\
+\midrule
+\endfirsthead
+
+\toprule
+Term & Definition \\
+\midrule
+\endhead
+
+\bottomrule
+\endfoot
+
+\termrow{Task Behavior Graph}{
+A typed graph associated with a task kind or task family. It connects canonical
+features across influence domains and supports estimation of resource demand,
+worker occupancy, uncertainty, and operational risk. A Task Behavior Graph is
+not assumed to prove causality by itself; it makes modeled influence
+assumptions explicit.
+}
+
+\termrow{graph node}{
+An element of a Task Behavior Graph representing a canonical feature, output,
+dimension, intermediate signal, or model concept. Each node belongs to one or
+more influence domains.
+}
+
+\termrow{graph edge}{
+A modeled influence relationship between two graph nodes. A graph edge is not
+a proven causal link unless validated by additional evidence.
+}
+
+\termrow{influence role}{
+The semantic role of a node or edge in the graph, such as baseline demand,
+contextual amplification, additive overhead, symptom, outcome link, risk
+propagation, uncertainty indicator, or profiling trigger.
+}
+
+\termrow{baseline demand edge}{
+An edge that connects an intrinsic feature to a baseline resource-demand or
+occupancy estimate. For example, payload size may contribute to network I/O or
+disk I/O baseline demand.
+}
+
+\termrow{contextual amplification edge}{
+An edge by which an execution-context factor amplifies or suppresses demand,
+occupancy, uncertainty, or risk.
+}
+
+\termrow{additive overhead edge}{
+An edge that represents additional fixed or variable overhead, such as setup,
+serialization, acknowledgement, commit, or retry bookkeeping.
+}
+
+\termrow{symptom edge}{
+An edge that connects an influence to a symptom or observed effect, such as
+network degradation contributing to retries or longer wall-clock duration.
+}
+
+\termrow{outcome link}{
+An edge that connects modeled behavior to an outcome, such as timeout, failure,
+success, cancellation, or dead-lettering.
+}
+
+\termrow{risk propagation edge}{
+An edge that connects demand, occupancy, uncertainty, or outcome to an
+operational-risk dimension.
+}
+
+\termrow{uncertainty indicator}{
+A node or edge role indicating that a signal changes uncertainty or confidence
+rather than directly changing resource demand.
+}
+
+\termrow{sensitivity}{
+The estimated strength of a relationship between graph nodes. Sensitivity may
+be expert-defined, learned, calibrated, or represented as a qualitative level.
+}
+
+\termrow{relevance}{
+Whether a feature or relationship matters for a task kind, task family, or
+behavior profile. Relevance is distinct from sensitivity.
+}
+
+\termrow{graph evaluation}{
+The process of applying a Task Behavior Graph to canonical features and
+execution context in order to estimate demand, occupancy, uncertainty,
+residuals, and risk.
+}
+
+\termrow{graph template}{
+A reusable graph structure that can be specialized for multiple related task
+kinds within a task family.
+}
+
+\termrow{model assumption}{
+An explicit assumption encoded in the graph, feature mapping, or policy. Model
+assumptions should be validated, calibrated, or revised when observations
+contradict them.
+}
+
+\end{longtable}

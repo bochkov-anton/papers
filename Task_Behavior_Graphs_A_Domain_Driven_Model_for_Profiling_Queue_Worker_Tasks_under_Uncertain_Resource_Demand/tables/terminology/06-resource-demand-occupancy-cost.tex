@@ -1,0 +1,160 @@
+\begin{longtable}{TD}
+\caption{Resource demand, occupancy, cost, and overhead terms.}
+\label{tab:terms-resource-demand-occupancy-cost}\\
+
+\toprule
+Term & Definition \\
+\midrule
+\endfirsthead
+
+\toprule
+Term & Definition \\
+\midrule
+\endhead
+
+\bottomrule
+\endfoot
+
+\termrow{resource demand}{
+The expected or required active resource need of a task attempt along a
+resource dimension. Resource demand is what the model estimates before or
+during execution.
+}
+
+\termrow{resource usage}{
+The observed actual use of a resource during execution. Resource usage is
+measured after or during execution and is distinct from estimated demand.
+}
+
+\termrow{active resource usage}{
+Actual use of active resources such as CPU, memory, disk, network, runtime
+allocation, or accelerator resources. Active resource usage is distinct from
+waiting and bounded-capacity occupancy.
+}
+
+\termrow{CPU time}{
+The amount of CPU execution time consumed by a task attempt. CPU time is not
+the same as wall-clock duration.
+}
+
+\termrow{CPU pressure}{
+Pressure on CPU capacity in the worker, container, node, or co-located
+environment. CPU pressure is an execution-context factor, not the same as task
+CPU demand.
+}
+
+\termrow{memory peak}{
+The maximum memory used by a task attempt during execution. Memory peak is a
+resource-usage or resource-demand dimension.
+}
+
+\termrow{memory pressure}{
+Pressure on available memory in the worker, container, node, or runtime
+environment. Memory pressure is an execution-context factor.
+}
+
+\termrow{allocation behavior}{
+The allocation volume, allocation rate, allocation pattern, or
+allocation-induced runtime effect of a task attempt. Allocation behavior may
+influence memory pressure, garbage collection, and CPU time.
+}
+
+\termrow{disk I/O}{
+Disk reads, writes, operations, bytes, or I/O wait associated with a task
+attempt. Disk I/O demand is distinct from disk pressure.
+}
+
+\termrow{network I/O}{
+Network bytes, packets, requests, or transfer volume associated with a task
+attempt. Network I/O is distinct from network instability.
+}
+
+\termrow{dependency wait time}{
+Time spent waiting for an external dependency, such as a database, API, remote
+service, or storage system. Dependency wait time can increase worker occupancy
+without increasing CPU time.
+}
+
+\termrow{worker occupancy}{
+Bounded execution capacity held by a task attempt over time. Worker occupancy
+is a first-class cost component in queue-worker systems.
+}
+
+\termrow{worker-slot time}{
+The time during which a task attempt holds a worker execution slot. This is the
+core worker-occupancy dimension.
+}
+
+\termrow{lease time}{
+The time during which a task lease or reservation is held. Lease time may
+differ from worker-slot time.
+}
+
+\termrow{connection hold time}{
+The time during which a task attempt holds a connection to a dependency,
+database, broker, or external service.
+}
+
+\termrow{lock hold time}{
+The time during which a task attempt holds a lock. Lock hold time can affect
+other tasks and may contribute to contention.
+}
+
+\termrow{lock wait time}{
+The time spent waiting to acquire a lock. Lock wait time is distinct from lock
+hold time.
+}
+
+\termrow{semaphore hold time}{
+The time during which a task attempt holds a semaphore, concurrency token, or
+bounded execution permit.
+}
+
+\termrow{tenant concurrency time}{
+The time during which a task attempt consumes a tenant-level concurrency slot.
+This dimension is relevant to fairness and isolation.
+}
+
+\termrow{wall-clock duration}{
+Elapsed time from attempt start to attempt finish. Wall-clock duration is often
+related to worker-slot time, but the two are not necessarily identical.
+}
+
+\termrow{latency}{
+Delay observed by a caller, queue, worker, dependency, or system boundary.
+Latency is an outcome or symptom, not resource demand by itself.
+}
+
+\termrow{service time}{
+The time a task attempt spends being served or executed, excluding queue wait
+time. The exact boundary must be defined for the queue-worker system being
+analyzed.
+}
+
+\termrow{queue wait time}{
+The time between enqueue and dequeue or execution start. Queue wait time is
+distinct from worker-slot time.
+}
+
+\termrow{task cost}{
+An umbrella term for resource demand, worker occupancy, and execution overhead
+associated with a task attempt. Operational risk is not part of task cost.
+}
+
+\termrow{execution overhead}{
+Overhead inherent to executing a task attempt, such as serialization, input
+fetching, setup, acknowledgement, commit, cleanup, or retry bookkeeping.
+}
+
+\termrow{profiling overhead}{
+Overhead caused by profiling and instrumentation, including tracing, metrics,
+runtime profiling, high-cardinality labels, sampling decisions, and telemetry
+export.
+}
+
+\termrow{telemetry overhead}{
+CPU, memory, allocation, network, storage, or cardinality cost introduced by
+telemetry collection and export.
+}
+
+\end{longtable}

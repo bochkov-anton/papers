@@ -1,0 +1,102 @@
+\begin{longtable}{TD}
+\caption{Uncertainty, confidence, residual, and risk terms.}
+\label{tab:terms-uncertainty-confidence-risk}\\
+
+\toprule
+Term & Definition \\
+\midrule
+\endfirsthead
+
+\toprule
+Term & Definition \\
+\midrule
+\endhead
+
+\bottomrule
+\endfoot
+
+\termrow{uncertainty}{
+Unreliability or unpredictability of a task behavior estimate. Uncertainty may
+come from missing features, hidden state, measurement error, drift, heavy tails,
+multimodality, or insufficient history.
+}
+
+\termrow{entropy}{
+A possible measure or family of measures for unpredictability. The term should
+only be used after specifying what distribution, signal, or behavior process is
+being measured.
+}
+
+\termrow{confidence}{
+The degree of trust in an estimate, behavior profile, graph edge, feature
+mapping, or model assumption. Confidence is distinct from uncertainty.
+}
+
+\termrow{residual error}{
+The part of observed behavior not explained by the current model estimate.
+Residual error exposes missing features, hidden influences, drift, or model
+mismatch.
+}
+
+\termrow{prediction error}{
+The difference between predicted and observed value for a resource, occupancy,
+duration, outcome, or risk-relevant dimension.
+}
+
+\termrow{drift}{
+A change in task behavior, feature mapping, graph relationship, context, or
+profile over time. Drift is a source of uncertainty and reduced confidence.
+}
+
+\termrow{variance}{
+The statistical spread of observed values. Variance is a variability signal but
+is not identical to entropy.
+}
+
+\termrow{tail ratio}{
+A ratio comparing a tail quantile with a central quantile, such as p95/p50 or
+p99/p50. Tail ratios help identify high-tail-risk behavior.
+}
+
+\termrow{multimodality}{
+The presence of multiple behavioral regimes or modes in the observed behavior
+of a task kind or task family.
+}
+
+\termrow{operational risk}{
+The consequence-weighted danger of underestimating, misclassifying, or
+mishandling a task attempt. Operational risk is separate from task cost.
+}
+
+\termrow{consequence}{
+The severity of the effect caused by an incorrect estimate or control decision,
+such as delayed processing, queue starvation, SLO violation, replication lag, or
+cascading overload.
+}
+
+\termrow{blast radius}{
+The scope affected by an error or overload event, such as a single task, queue,
+worker pool, tenant, replica set, dependency, cluster, or control plane.
+}
+
+\termrow{SLO violation risk}{
+The operational risk that a task attempt, task kind, queue, tenant, or service
+will violate a service-level objective.
+}
+
+\termrow{queue starvation risk}{
+The risk that long-running or high-occupancy tasks delay or prevent other tasks
+from receiving execution capacity.
+}
+
+\termrow{retry amplification risk}{
+The risk that retries increase work, dependency pressure, queue occupancy, or
+worker occupancy enough to worsen overload.
+}
+
+\termrow{cascade overload risk}{
+The risk that local overload propagates to other queues, workers, dependencies,
+tenants, or control loops.
+}
+
+\end{longtable}

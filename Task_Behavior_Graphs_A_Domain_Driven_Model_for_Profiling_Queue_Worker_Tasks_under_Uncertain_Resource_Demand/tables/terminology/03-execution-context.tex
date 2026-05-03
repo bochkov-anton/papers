@@ -1,0 +1,124 @@
+\begin{longtable}{TD}
+\caption{Execution-context terms.}
+\label{tab:terms-execution-context}\\
+
+\toprule
+Term & Definition \\
+\midrule
+\endfirsthead
+
+\toprule
+Term & Definition \\
+\midrule
+\endhead
+
+\bottomrule
+\endfoot
+
+\termrow{execution context}{
+The environment and state under which a task attempt executes. Execution
+context includes worker state, node pressure, dependency health, network
+condition, disk pressure, cache state, tenant pressure, retry state, and other
+runtime or domain-specific conditions.
+}
+
+\termrow{context factor}{
+A feature of the execution context that may influence task behavior. Context
+factors are modeled as influences, not automatically as proven causes.
+}
+
+\termrow{worker state}{
+The local state of the worker during a task attempt, including local runtime
+pressure, running work, memory state, garbage-collection pressure, and local
+scheduling delay.
+}
+
+\termrow{worker pressure}{
+Pressure on a worker or worker pool, such as busy worker slots, saturated local
+queues, high utilization, or local scheduling delay.
+}
+
+\termrow{node pressure}{
+Pressure on the host, virtual machine, container, or node on which the worker
+runs. Examples include CPU saturation, memory pressure, disk pressure, and
+network saturation.
+}
+
+\termrow{dependency health}{
+The operational condition of an external dependency, such as latency, timeout
+rate, error rate, saturation, quota pressure, or availability.
+}
+
+\termrow{dependency capacity}{
+The available capacity of an external dependency, such as connection-pool
+capacity, rate-limit budget, service quota, or downstream throughput.
+}
+
+\termrow{network condition}{
+The state of the network path relevant to a task attempt, including round-trip
+time, jitter, packet loss, retransmissions, bandwidth, timeouts, and
+availability.
+}
+
+\termrow{network instability}{
+A normalized feature representing unstable network behavior. It may be derived
+from packet loss, jitter, retransmissions, timeout rate, bandwidth variation, or
+recent network failures.
+}
+
+\termrow{replica state}{
+The state of a replica, shard, peer, or replica set involved in a task attempt.
+Replica state is relevant to replication, repair, synchronization, and
+consistency tasks.
+}
+
+\termrow{replica health}{
+A normalized feature representing the operational condition of a replica or
+peer. Replica health is related to, but distinct from, replication lag.
+}
+
+\termrow{replication lag}{
+An observation or signal describing how far a replica is behind another source
+of truth. It may be measured in bytes, records, operations, versions, or time.
+}
+
+\termrow{disk pressure}{
+Pressure on the storage subsystem, such as queue depth, read latency, write
+latency, I/O wait, or saturation. Disk pressure is an execution-context factor,
+not the same as disk I/O demand.
+}
+
+\termrow{cache state}{
+The condition of a cache relevant to a task attempt, such as warm, cold, stale,
+evicted, partially populated, or inconsistent.
+}
+
+\termrow{cache warmth}{
+A normalized feature representing how prepared or populated a cache is for the
+task attempt. Cache warmth can influence resource demand and latency.
+}
+
+\termrow{data locality}{
+The proximity of required data to the worker or execution environment. Examples
+include local, remote, cross-zone, cross-region, or external storage access.
+}
+
+\termrow{tenant pressure}{
+Pressure or quota usage associated with a tenant, such as used concurrency,
+rate-limit consumption, or tenant-level backlog.
+}
+
+\termrow{retry state}{
+The state of the retry cycle for a task instance or attempt, including attempt
+number, previous errors, backoff state, retry budget, and retry history.
+}
+
+\termrow{hidden system dynamics}{
+Unobserved or partially observed system state that affects task behavior, such
+as internal dependency queues, lock contention, cache eviction history, data
+fragmentation, noisy neighbors, kernel behavior, or runtime effects. Hidden
+dynamics are represented through residual error, uncertainty, and reduced
+confidence when not captured by known features.
+}
+
+\end{longtable}

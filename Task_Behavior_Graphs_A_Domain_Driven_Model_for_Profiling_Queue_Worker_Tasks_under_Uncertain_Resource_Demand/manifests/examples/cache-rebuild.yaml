@@ -1,0 +1,18 @@
+task_class: cache.rebuild
+version: v1
+
+classification:
+  execution_shape:
+    - maintenance
+    - batch
+  dominant_resources:
+    - network
+    - memory
+    - disk_io
+    - worker_slot
+  entropy_class: high
+  consequence_class: high
+
+profiling_policy:
+  default_level: detailed_accounting
+  sampling: adaptive

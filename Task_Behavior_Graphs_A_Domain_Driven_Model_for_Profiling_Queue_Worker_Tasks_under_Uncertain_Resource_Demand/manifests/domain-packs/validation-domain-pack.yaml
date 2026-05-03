@@ -1,0 +1,12 @@
+domain_pack: validation-domain-pack
+version: v1
+
+task_classes: []
+
+metric_descriptors: []
+
+feature_mappings: []
+
+behavior_graphs: []
+
+profiling_policies: []

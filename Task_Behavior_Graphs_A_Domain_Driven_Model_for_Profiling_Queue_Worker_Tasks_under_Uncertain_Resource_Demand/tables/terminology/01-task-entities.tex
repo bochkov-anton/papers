@@ -1,0 +1,109 @@
+\begin{longtable}{TD}
+\caption{Task entity terms.}
+\label{tab:terms-task-entities}\\
+
+\toprule
+Term & Definition \\
+\midrule
+\endfirsthead
+
+\toprule
+Term & Definition \\
+\midrule
+\endhead
+
+\bottomrule
+\endfoot
+
+\termrow{task}{
+A generic unit of work handled by a queue-worker system. The term is used only
+when the distinction between task kind, task instance, and task attempt is not
+important.
+}
+
+\termrow{task kind}{
+The semantic type of work submitted to a queue, such as copying a replication
+partition, rebuilding a cache entry, resizing an image, repairing a database
+record, dispatching a webhook, or validating a document. A task kind describes
+what work is requested, but it does not fully determine how that work behaves
+under every execution context.
+}
+
+\termrow{task instance}{
+A concrete logical unit of work placed into a queue. A task instance belongs to
+a task kind and may produce one or more execution attempts.
+}
+
+\termrow{task attempt}{
+One concrete execution attempt of a task instance. Retries, lease expiration,
+worker failure, cancellation, or rescheduling may cause a single task instance
+to have multiple attempts. Resource demand, worker occupancy, observations,
+outcomes, and residuals are usually measured or estimated at attempt
+granularity.
+}
+
+\termrow{task family}{
+A group of task kinds that share a similar behavior-graph structure or profiling
+model. A task family can be used when one graph template applies to several
+related task kinds.
+}
+
+\termrow{task identity}{
+The identifying metadata of a task, including task kind, task version, queue,
+producer, tenant, priority, and deadline. Task identity identifies the work but
+does not itself define the cost of executing it.
+}
+
+\termrow{task version}{
+The version of a task kind, handler contract, payload schema, or behavior
+manifest. Task versions are useful for compatibility between historical
+profiles, manifests, and schema versions.
+}
+
+\termrow{queue}{
+The queue through which a task instance is submitted, stored, reserved, and
+eventually consumed by a worker. A queue name may provide useful context, but it
+is not a complete behavior model.
+}
+
+\termrow{producer}{
+The component that creates and submits a task instance to a queue. The producer
+may provide metadata or declared hints, but it does not fully determine the
+execution context.
+}
+
+\termrow{worker}{
+An executor that dequeues, reserves, executes, retries, acknowledges, discards,
+or fails task attempts. In this paper, a worker is treated as an execution
+boundary rather than merely a message consumer.
+}
+
+\termrow{worker pool}{
+A set of workers that execute task attempts. Worker-pool capacity and
+worker-pool occupancy are central to queue-worker profiling.
+}
+
+\termrow{tenant}{
+A user, customer, namespace, application, or logical group that consumes
+execution capacity. Tenants are relevant for isolation, fairness, consequence
+analysis, and operational risk.
+}
+
+\termrow{tenant class}{
+A category of tenants based on SLO, priority, plan, criticality, or operational
+risk. A tenant class is distinct from a task kind.
+}
+
+\termrow{priority}{
+A scheduling or ordering attribute assigned to a task instance. Priority may
+influence profiling or admission decisions, but it is not itself resource demand
+or operational risk.
+}
+
+\termrow{deadline}{
+A completion target or time constraint associated with a task instance. A
+deadline may affect consequence and risk, but it is distinct from observed
+latency.
+}
+
+\end{longtable}

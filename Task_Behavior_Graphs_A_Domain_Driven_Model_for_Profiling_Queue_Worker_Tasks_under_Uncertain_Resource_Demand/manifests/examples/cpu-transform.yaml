@@ -1,0 +1,41 @@
+task_class: compute.cpu_transform
+version: v1
+
+classification:
+  execution_shape:
+    - input_proportional
+    - cpu_bound
+  dominant_resources:
+    - cpu
+    - memory
+  entropy_class: medium
+  consequence_class: medium
+
+required_features:
+  intrinsic:
+    - records.count
+    - payload.size
+    - operation.mode
+  context:
+    - node.cpu_pressure
+    - runtime.gc_pressure
+  occupancy:
+    - worker.slot_time
+  outcome:
+    - task.status
+
+graph:
+  edges:
+    - from: records.count
+      to: resource.cpu.time
+      role: base_demand
+      sensitivity: very_high
+
+    - from: node.cpu_pressure
+      to: occupancy.worker.slot_time
+      role: amplification
+      sensitivity: high
+
+profiling_policy:
+  default_level: aggregated_accounting
+  sampling: low_rate

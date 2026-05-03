@@ -1,0 +1,19 @@
+task_class: database.repair
+version: v1
+
+classification:
+  execution_shape:
+    - maintenance
+    - state_dependent
+    - heavy_tail
+  dominant_resources:
+    - disk_io
+    - network
+    - worker_slot
+  entropy_class: very_high
+  consequence_class: critical
+
+profiling_policy:
+  default_level: detailed_accounting
+  sampling: tail_aware
+  isolation: recommended

@@ -1,0 +1,31 @@
+task_class: external_api.fanout
+version: v1
+
+classification:
+  execution_shape:
+    - fanout
+    - dependency_bound
+  dominant_resources:
+    - dependency_wait
+    - network
+    - worker_slot
+  entropy_class: high
+  consequence_class: medium
+
+required_features:
+  intrinsic:
+    - fanout.width
+    - payload.size
+  context:
+    - dependency.health
+    - network.instability
+  occupancy:
+    - worker.slot_time
+    - connection.hold_time
+  outcome:
+    - task.status
+    - task.retry_count
+
+profiling_policy:
+  default_level: sampled_tracing
+  sampling: error_and_tail_aware

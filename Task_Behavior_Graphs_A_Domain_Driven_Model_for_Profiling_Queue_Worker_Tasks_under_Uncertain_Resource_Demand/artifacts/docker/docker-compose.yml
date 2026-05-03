@@ -1,0 +1,9 @@
+services:
+  paper:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ../..:/paper
+    working_dir: /paper
+    command: make

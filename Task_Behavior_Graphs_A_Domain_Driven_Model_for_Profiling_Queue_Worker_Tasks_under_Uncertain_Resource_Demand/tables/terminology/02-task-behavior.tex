@@ -1,0 +1,118 @@
+\begin{longtable}{TD}
+\caption{Task behavior terms.}
+\label{tab:terms-task-behavior}\\
+
+\toprule
+Term & Definition \\
+\midrule
+\endfirsthead
+
+\toprule
+Term & Definition \\
+\midrule
+\endhead
+
+\bottomrule
+\endfoot
+
+\termrow{behavior}{
+The observed or estimated execution pattern of a task kind, task instance, or
+task attempt under a particular execution context. Behavior includes resource
+demand, worker occupancy, retry behavior, dependency wait, outcome,
+uncertainty, and risk-relevant effects.
+}
+
+\termrow{task behavior}{
+The way a task executes: which resources it demands, which bounded capacities
+it holds, how it completes, how variable it is, and what operational
+consequences may follow from misestimating or mishandling it.
+}
+
+\termrow{behavior profile}{
+A summarized description of how a task kind behaves under a class of execution
+contexts. A behavior profile may include demand distributions, occupancy
+distributions, dominant behavior classes, uncertainty, risk class, and relevant
+features.
+}
+
+\termrow{behavior class}{
+An analytical category derived from observed or estimated behavior. Examples
+include compute-dominant, dependency-bound, retry-amplifying, worker-slot-heavy,
+payload-sensitive, state-dependent, or high-tail-risk behavior.
+}
+
+\termrow{behavior mode}{
+A context-dependent mode of behavior for a task kind. The term emphasizes that
+the same task kind may behave differently under different execution contexts.
+}
+
+\termrow{compute-dominant behavior}{
+Behavior in which CPU demand is the dominant active resource dimension. A task
+kind may exhibit compute-dominant behavior without being intrinsically a CPU
+task in all contexts.
+}
+
+\termrow{memory-pressure-sensitive behavior}{
+Behavior that is sensitive to memory pressure, allocation rate, working-set
+size, or garbage-collection effects. This behavior is not necessarily identical
+to being memory-bound.
+}
+
+\termrow{disk-IO-dominant behavior}{
+Behavior in which disk reads, disk writes, storage throughput, or I/O wait
+dominates execution. Disk I/O demand is distinct from disk pressure in the
+execution environment.
+}
+
+\termrow{network-sensitive behavior}{
+Behavior that changes substantially with network condition, such as packet
+loss, jitter, retransmissions, bandwidth changes, or timeouts.
+}
+
+\termrow{dependency-bound behavior}{
+Behavior constrained primarily by external dependencies, such as databases,
+APIs, remote services, rate limits, quotas, or connection pools.
+}
+
+\termrow{retry-amplifying behavior}{
+Behavior in which retries substantially increase work, worker occupancy, or
+operational risk. Retry count may be a symptom or outcome rather than an
+independent cause.
+}
+
+\termrow{worker-slot-heavy behavior}{
+Behavior with high worker-slot time relative to active resource usage. This
+class is important for queue workers because a task may consume little CPU but
+hold scarce worker capacity for a long time.
+}
+
+\termrow{payload-sensitive behavior}{
+Behavior that depends strongly on payload size, input shape, record count,
+object count, or batch size. Payload-sensitive behavior can still be uncertain
+if context or hidden state varies.
+}
+
+\termrow{state-dependent behavior}{
+Behavior that depends on domain-specific or internal system state, such as
+replica divergence, cache state, compaction debt, segment fragmentation, or
+dirty data volume.
+}
+
+\termrow{high-tail-risk behavior}{
+Behavior in which rare slow executions or high-percentile outcomes are
+operationally important. High-tail-risk behavior is distinct from high average
+cost.
+}
+
+\termrow{stable behavior}{
+Behavior with low residual error, low drift, and low variability under
+comparable execution contexts. Stable behavior may still be expensive.
+}
+
+\termrow{unstable behavior}{
+Behavior with high variability, drift, residual error, multimodality, or
+context sensitivity. Unstable behavior is not necessarily high-cost in every
+attempt.
+}
+
+\end{longtable}

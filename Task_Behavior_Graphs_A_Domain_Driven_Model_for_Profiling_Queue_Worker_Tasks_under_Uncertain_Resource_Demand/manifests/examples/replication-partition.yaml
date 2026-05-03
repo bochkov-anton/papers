@@ -1,0 +1,61 @@
+task_class: replication.partition
+version: v1
+
+classification:
+  execution_shape:
+    - replication
+    - state_dependent
+    - long_running
+  dominant_resources:
+    - network
+    - disk_io
+    - worker_slot
+  entropy_class: high
+  consequence_class: high
+
+required_features:
+  intrinsic:
+    - payload.size
+    - replication.changed_objects
+  context:
+    - network.instability
+    - replica.health
+    - disk.pressure
+  occupancy:
+    - worker.slot_time
+    - lease.time
+  outcome:
+    - task.status
+    - task.retry_count
+
+graph:
+  edges:
+    - from: payload.size
+      to: resource.network.out_bytes
+      role: base_demand
+      sensitivity: high
+
+    - from: network.instability
+      to: occupancy.worker.slot_time
+      role: amplification
+      sensitivity: very_high
+
+    - from: replica.health
+      to: resource.dependency.wait_time
+      role: amplification
+      sensitivity: high
+
+    - from: occupancy.worker.slot_time
+      to: risk.queue.starvation
+      role: consequence
+      sensitivity: medium
+
+profiling_policy:
+  default_level: detailed_accounting
+  sampling: tail_aware
+  required_observation_points:
+    - dequeue
+    - input_fetch
+    - dependency_call
+    - retry
+    - finish

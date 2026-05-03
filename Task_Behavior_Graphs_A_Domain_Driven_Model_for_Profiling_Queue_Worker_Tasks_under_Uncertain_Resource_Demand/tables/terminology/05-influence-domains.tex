@@ -1,0 +1,78 @@
+\begin{longtable}{TD}
+\caption{Influence domain terms.}
+\label{tab:terms-influence-domains}\\
+
+\toprule
+Term & Definition \\
+\midrule
+\endfirsthead
+
+\toprule
+Term & Definition \\
+\midrule
+\endhead
+
+\bottomrule
+\endfoot
+
+\termrow{influence domain}{
+A semantic role assigned to a feature, observation, or output in the task
+behavior model. Influence domains are not metric domains: they group model
+elements by role rather than by telemetry source.
+}
+
+\termrow{task identity domain}{
+The influence domain containing identifiers and metadata that describe which
+task is being executed, such as task kind, version, queue, tenant, producer,
+priority, and deadline.
+}
+
+\termrow{intrinsic demand domain}{
+The influence domain describing work contained in the task itself, such as
+payload size, record count, object count, partition size, input format,
+operation mode, or batch size.
+}
+
+\termrow{execution context domain}{
+The influence domain describing the environment and state under which the task
+attempt executes, such as network condition, dependency health, replica state,
+disk pressure, cache warmth, worker pressure, and retry state.
+}
+
+\termrow{resource demand domain}{
+The influence domain describing active resource dimensions required or consumed
+by the task attempt, such as CPU time, memory peak, disk I/O, network I/O,
+dependency wait time, runtime allocations, or accelerator usage.
+}
+
+\termrow{worker occupancy domain}{
+The influence domain describing bounded execution capacity held by the task
+attempt, such as worker-slot time, lease time, connection hold time, lock hold
+time, semaphore hold time, or tenant concurrency time.
+}
+
+\termrow{outcome domain}{
+The influence domain describing how the task attempt completed, such as
+success, failure, timeout, cancellation, retryable error, non-retryable error,
+dead-lettering, or lease expiration.
+}
+
+\termrow{uncertainty domain}{
+The influence domain describing unreliability or unpredictability in the model
+estimate or behavior profile, such as residual error, drift, variance, tail
+ratio, multimodality, missing features, or low sample count.
+}
+
+\termrow{risk domain}{
+The influence domain describing the consequence-weighted danger of
+underestimating, misclassifying, or mishandling a task attempt. Examples include
+queue starvation, retry storm, SLO violation, replication lag, tenant impact,
+and cascading overload.
+}
+
+\termrow{profiling observation domain}{
+The influence domain describing what is observed, where it is observed, at what
+detail level, and under which overhead budget.
+}
+
+\end{longtable}

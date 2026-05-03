@@ -1,0 +1,117 @@
+% Input encoding for pdfLaTeX.
+\usepackage[utf8]{inputenc}
+
+% Font encoding for better hyphenation and copyable PDF text.
+\usepackage[T1]{fontenc}
+
+% Latin Modern fonts, a better default replacement for Computer Modern.
+\usepackage{lmodern}
+
+% Main document language.
+% Keep main=english for an English-language academic paper.
+\usepackage[main=english]{babel}
+
+% If the paper contains substantial Russian text, replace fontenc/babel with:
+% \usepackage[T2A,T1]{fontenc}
+% \usepackage[main=english,russian]{babel}
+
+% Improves microtypography: protrusion, expansion, spacing, and kerning.
+\usepackage{microtype}
+
+% Page layout.
+% Remove or adjust this if a journal/conference template defines its own layout.
+\usepackage[a4paper,margin=1in]{geometry}
+
+% Context-aware quotation marks.
+% Useful for academic prose and quoted fragments.
+\usepackage{csquotes}
+
+% Extended color support.
+% The table option enables color support inside tables.
+\usepackage[table]{xcolor}
+
+% Core AMS mathematics packages.
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage{amsthm}
+
+% Extensions and fixes for amsmath.
+\usepackage{mathtools}
+
+% Bold mathematical symbols: \bm{x}, \bm{\theta}, \bm{\Sigma}.
+\usepackage{bm}
+
+% Script-style mathematical symbols: \mathscr{G}, \mathscr{T}, \mathscr{D}.
+\usepackage{mathrsfs}
+
+% Consistent formatting for numbers and units.
+% Useful for latency, throughput, CPU time, memory, and duration values.
+\usepackage{siunitx}
+
+% Publication-quality tables: \toprule, \midrule, \bottomrule.
+\usepackage{booktabs}
+
+% Extended table column definitions.
+\usepackage{array}
+
+% Tables with automatically adjusted column widths.
+\usepackage{tabularx}
+
+% Multi-line and merged table cells.
+\usepackage{makecell}
+\usepackage{multirow}
+
+% Tables that can span multiple pages.
+\usepackage{longtable}
+
+% Tables with structured notes below the table body.
+\usepackage{threeparttable}
+
+% Image inclusion.
+\usepackage{graphicx}
+
+% Customization of figure and table captions.
+\usepackage{caption}
+
+% Subfigures and subtables: Figure 1a, Figure 1b, etc.
+\usepackage{subcaption}
+
+% Resizing and fitting wide figures, tables, and diagrams.
+\usepackage{adjustbox}
+
+% Better control over itemize, enumerate, and description lists.
+\usepackage{enumitem}
+
+% Stronger float placement control via [H].
+% Use sparingly because excessive forced placement can harm page layout.
+\usepackage{float}
+
+% Floating algorithm environment.
+\usepackage{algorithm}
+
+% Pseudocode environment for algorithms.
+% Do not load algorithm2e, algorithmic, and algpseudocode together.
+\usepackage{algpseudocode}
+
+% Source code listings without requiring shell-escape.
+% Keep listing style configuration in preamble/listings.tex.
+\usepackage{listings}
+
+% Sorts and compresses numeric citations: [1,2,3] -> [1--3].
+% Suitable for classic BibTeX styles such as plain.
+\usepackage{cite}
+
+% Better line breaking for long URLs.
+\usepackage{xurl}
+
+% Hyperlinks for references, citations, URLs, and the table of contents.
+% hyperref should usually be loaded near the end of the preamble.
+\usepackage[hidelinks]{hyperref}
+
+% Smart cross-references: \cref{fig:...}, \cref{sec:...}, \cref{eq:...}.
+% cleveref should be loaded after hyperref.
+\usepackage[nameinlink,noabbrev]{cleveref}
+
+% Better support for ragged right text in tables and other environments.
+\usepackage{ragged2e}

@@ -1,0 +1,110 @@
+\begin{longtable}{TD}
+\caption{Queue-worker lifecycle terms.}
+\label{tab:terms-queue-worker-lifecycle}\\
+
+\toprule
+Term & Definition \\
+\midrule
+\endfirsthead
+
+\toprule
+Term & Definition \\
+\midrule
+\endhead
+
+\bottomrule
+\endfoot
+
+\termrow{enqueue}{
+The lifecycle point at which a task instance is submitted to a queue.
+}
+
+\termrow{dequeue}{
+The lifecycle point at which a worker takes a task instance from a queue for
+processing.
+}
+
+\termrow{reserve}{
+The lifecycle point at which a worker or worker framework claims a task
+instance, often through a lease, visibility timeout, or reservation mechanism.
+}
+
+\termrow{start}{
+The lifecycle point at which a task attempt begins execution.
+}
+
+\termrow{input fetch}{
+The stage in which the worker fetches external input, payload data, referenced
+objects, or domain state required by the task attempt.
+}
+
+\termrow{deserialize}{
+The stage in which the worker decodes, parses, or prepares the task payload or
+input data for processing.
+}
+
+\termrow{processing stage}{
+A logical phase inside task execution, such as validation, transformation,
+dependency call, write, commit, or cleanup.
+}
+
+\termrow{dependency call}{
+An interaction with an external service, API, database, storage system, broker,
+or remote dependency during task execution.
+}
+
+\termrow{retry}{
+A repeated execution attempt or repeated operation after failure, timeout,
+lease expiration, cancellation, or retryable error.
+}
+
+\termrow{backoff}{
+A delay before retrying a task attempt or operation. Backoff can contribute to
+worker occupancy if execution capacity remains held.
+}
+
+\termrow{output write}{
+The stage in which task output, state changes, generated data, or side effects
+are written.
+}
+
+\termrow{commit}{
+The stage in which task effects are finalized, persisted, checkpointed, or made
+visible.
+}
+
+\termrow{acknowledge}{
+The lifecycle point at which a worker confirms task completion to the queue or
+broker.
+}
+
+\termrow{ack}{
+A short form of acknowledge.
+}
+
+\termrow{discard}{
+The lifecycle outcome in which a task instance or attempt is intentionally
+dropped or ignored.
+}
+
+\termrow{dead-letter}{
+The lifecycle outcome in which a task is moved to a dead-letter queue or
+equivalent failure storage.
+}
+
+\termrow{finish}{
+The lifecycle point at which a task attempt ends, whether by success, failure,
+timeout, cancellation, or another terminal outcome.
+}
+
+\termrow{lease expiration}{
+The lifecycle event in which a task reservation expires before successful
+acknowledgement or completion.
+}
+
+\termrow{cancellation}{
+The lifecycle event in which a task attempt is explicitly stopped before normal
+completion.
+}
+
+\end{longtable}

@@ -1,0 +1,141 @@
+\begin{longtable}{TD}
+\caption{Observation, signal, and feature terms.}
+\label{tab:terms-observations-features}\\
+
+\toprule
+Term & Definition \\
+\midrule
+\endfirsthead
+
+\toprule
+Term & Definition \\
+\midrule
+\endhead
+
+\bottomrule
+\endfoot
+
+\termrow{observation}{
+Any measurement, event, trace, profile sample, counter, log entry, or
+domain-specific signal exposed by a queue, worker runtime, operating system,
+container runtime, dependency, tracing system, or domain component.
+}
+
+\termrow{raw observation}{
+An unnormalized measurement or event before interpretation. A raw observation
+does not by itself have stable model meaning.
+}
+
+\termrow{metric}{
+A time-series, counter, gauge, or histogram observation. Metrics are one kind
+of observation; traces, logs, profiles, and domain events are observations too.
+}
+
+\termrow{counter}{
+A metric that counts events, operations, bytes, retries, failures, or other
+monotonic quantities. A counter may represent a symptom or outcome rather than
+a root influence.
+}
+
+\termrow{gauge}{
+A metric representing a current value, such as queue depth, active workers,
+available connections, or current memory usage.
+}
+
+\termrow{histogram}{
+A metric representing a distribution of observed values, such as durations,
+latencies, sizes, or per-attempt costs.
+}
+
+\termrow{trace}{
+An execution trace composed of spans. A trace exposes execution structure and
+timing, but it does not by itself define task-kind-specific relevance,
+causality, feature mapping, or profiling policy.
+}
+
+\termrow{span}{
+A timed unit inside a trace representing an operation, processing stage,
+dependency call, or instrumented region. A span is not the same as a task
+attempt.
+}
+
+\termrow{log}{
+A structured or unstructured event record emitted by a system. Logs may expose
+status, error classes, domain events, or diagnostic information.
+}
+
+\termrow{runtime profile}{
+A CPU, heap, allocation, lock, blocking, or runtime-level profile. A runtime
+profile is distinct from a behavior profile.
+}
+
+\termrow{signal}{
+An interpreted, aggregated, or derived observation that indicates a condition
+relevant to the model. A signal is an intermediate layer between raw
+observation and canonical feature.
+}
+
+\termrow{canonical feature}{
+A typed and normalized model input derived from task metadata, execution
+context, raw observations, or signals. Task Behavior Graphs operate over
+canonical features rather than arbitrary raw metrics.
+}
+
+\termrow{semantic feature}{
+A feature with explicit semantic meaning in the model. In this paper, the
+preferred term is canonical feature.
+}
+
+\termrow{feature mapping}{
+The process of converting raw observations, signals, task metadata, and context
+into canonical features. Feature mapping is separate from graph evaluation.
+}
+
+\termrow{normalization}{
+The process of converting values into a defined type, unit, scale, bucket, or
+range. For example, network measurements may be normalized into an instability
+score in $[0,1]$.
+}
+
+\termrow{aggregation}{
+The process of combining observations over a time window, group, task kind,
+attempt set, or distribution. Examples include sum, average, maximum, p95, and
+p99.
+}
+
+\termrow{feature registry}{
+A registry of canonical features, including names, types, ranges, units,
+influence domains, and intended meaning.
+}
+
+\termrow{metric descriptor}{
+A descriptor of a raw metric, including source, unit, label set, aggregation,
+cardinality, and mapping to canonical features.
+}
+
+\termrow{feature descriptor}{
+A descriptor of a canonical feature, including type, range, unit, semantic
+meaning, influence domain, and expected use in the model.
+}
+
+\termrow{cardinality}{
+The number of distinct time series or label combinations produced by a metric.
+Cardinality affects telemetry overhead and storage cost.
+}
+
+\termrow{high-cardinality label}{
+A metric label that can create a large or unbounded number of series, such as
+task id, user id, object id, URL, or unbounded tenant label.
+}
+
+\termrow{observation window}{
+The time window over which observations are aggregated or interpreted. For
+example, network instability may be computed over the last 30 seconds.
+}
+
+\termrow{freshness}{
+How recent and applicable an observation is to the current task attempt. Stale
+observations may reduce confidence.
+}
+
+\end{longtable}

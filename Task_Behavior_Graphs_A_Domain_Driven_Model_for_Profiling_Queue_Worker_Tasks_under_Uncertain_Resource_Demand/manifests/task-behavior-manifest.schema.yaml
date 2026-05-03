@@ -1,0 +1,8 @@
+# Draft schema placeholder for Task Behavior Manifest.
+type: object
+required:
+  - task_class
+  - classification
+  - required_features
+  - graph
+  - profiling_policy

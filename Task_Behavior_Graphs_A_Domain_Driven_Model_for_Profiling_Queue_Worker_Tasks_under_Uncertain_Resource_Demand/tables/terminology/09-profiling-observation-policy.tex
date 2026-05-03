@@ -1,0 +1,115 @@
+\begin{longtable}{TD}
+\caption{Profiling and observation-policy terms.}
+\label{tab:terms-profiling-observation-policy}\\
+
+\toprule
+Term & Definition \\
+\midrule
+\endfirsthead
+
+\toprule
+Term & Definition \\
+\midrule
+\endhead
+
+\bottomrule
+\endfoot
+
+\termrow{profiling}{
+The process of collecting, interpreting, and using observations to estimate
+task behavior. In this paper, profiling is broader than CPU profiling.
+}
+
+\termrow{task profiling}{
+Profiling logical task attempts in queue-worker systems in order to estimate
+resource demand, worker occupancy, uncertainty, and operational risk.
+}
+
+\termrow{observation strategy}{
+A decision about what to observe, where to observe it, how often to observe it,
+and under what overhead budget.
+}
+
+\termrow{profiling policy}{
+The selected observation and instrumentation strategy for a task kind, task
+attempt, or execution context.
+}
+
+\termrow{accounting}{
+Recording basic execution facts, such as start time, finish time, status,
+duration, input size, output size, resource usage, or occupancy.
+}
+
+\termrow{minimal accounting}{
+A low-overhead accounting level that records only essential task facts, such as
+start time, finish time, status, and basic size information.
+}
+
+\termrow{detailed accounting}{
+An accounting level that records more detailed resource, occupancy, stage,
+dependency, and outcome information.
+}
+
+\termrow{tracing}{
+Capturing execution structure and timing through traces and spans. Tracing is
+an observation method, not a behavior model by itself.
+}
+
+\termrow{sampled tracing}{
+Tracing only a subset of tasks, attempts, or traces in order to control
+overhead.
+}
+
+\termrow{tail-aware profiling}{
+A profiling strategy that preferentially observes slow, failed, high-risk, or
+tail-heavy attempts.
+}
+
+\termrow{diagnostic profiling}{
+Deep and usually expensive profiling used to investigate unexplained behavior,
+high residual error, drift, or model failure.
+}
+
+\termrow{isolated execution profiling}{
+Profiling in a more controlled or isolated execution environment in order to
+reduce interference or better attribute behavior.
+}
+
+\termrow{cooperative instrumentation}{
+Instrumentation in which worker or task code explicitly emits structured
+observations such as spans, timers, byte counts, record counts, dependency
+calls, stage boundaries, and domain-specific signals.
+}
+
+\termrow{sampling}{
+Selecting a subset of tasks, attempts, events, spans, traces, or profile samples
+for observation or retention.
+}
+
+\termrow{head sampling}{
+A trace-sampling strategy that decides whether to sample before the full trace
+is observed.
+}
+
+\termrow{tail sampling}{
+A trace-sampling strategy that decides whether to sample after seeing all or
+most of a trace.
+}
+
+\termrow{observation point}{
+A point in the task lifecycle where observations can be collected, such as
+enqueue, dequeue, reserve, start, dependency call, retry, commit, acknowledge,
+or finish.
+}
+
+\termrow{profiling budget}{
+The allowed overhead for profiling and telemetry, including CPU, memory,
+allocation, storage, network, and cardinality costs.
+}
+
+\termrow{hot path}{
+The latency- or throughput-sensitive path of task execution where added
+instrumentation overhead can affect production behavior.
+}
+
+\end{longtable}

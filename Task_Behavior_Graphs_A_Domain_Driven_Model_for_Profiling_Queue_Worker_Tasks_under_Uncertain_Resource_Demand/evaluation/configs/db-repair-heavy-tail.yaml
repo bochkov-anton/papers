@@ -1,0 +1,9 @@
+scenario: db-repair-heavy-tail
+description: TODO
+workload: TODO
+profiling_policy: TODO
+metrics:
+  - estimation_error
+  - profiling_overhead
+  - residual_error
+  - decision_quality

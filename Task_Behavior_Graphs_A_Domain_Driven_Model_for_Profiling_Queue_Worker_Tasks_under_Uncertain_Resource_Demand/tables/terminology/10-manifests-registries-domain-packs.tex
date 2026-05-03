@@ -1,0 +1,88 @@
+\begin{longtable}{TD}
+\caption{Manifest, registry, and domain-pack terms.}
+\label{tab:terms-manifests-registries-domain-packs}\\
+
+\toprule
+Term & Definition \\
+\midrule
+\endfirsthead
+
+\toprule
+Term & Definition \\
+\midrule
+\endhead
+
+\bottomrule
+\endfoot
+
+\termrow{Task Behavior Manifest}{
+A declarative description of the behavior model for a task kind or task family.
+It may describe features, domains, graph nodes, graph edges, observation
+requirements, profiling policy defaults, known gaps, and versioning.
+}
+
+\termrow{manifest}{
+A machine-readable or human-readable specification used to declare part of the
+task behavior model.
+}
+
+\termrow{domain pack}{
+An extension package that provides domain-specific metrics, feature mappings,
+feature descriptors, graph templates, examples, or profiling defaults.
+}
+
+\termrow{metric descriptor registry}{
+A registry describing raw metrics and how they can be interpreted, aggregated,
+and mapped to canonical features.
+}
+
+\termrow{graph declaration}{
+The part of a manifest that declares graph nodes, graph edges, influence roles,
+sensitivities, confidence, and applicability conditions.
+}
+
+\termrow{profiling policy declaration}{
+The part of a manifest that declares default observation strategies, required
+observation points, sampling rules, and profiling overhead limits.
+}
+
+\termrow{schema}{
+A machine-validation structure for manifests, descriptors, registries, domain
+packs, or graph declarations.
+}
+
+\termrow{versioning}{
+The practice of assigning versions to schemas, manifests, domain packs, task
+kinds, feature registries, or graph structures in order to manage evolution and
+compatibility.
+}
+
+\termrow{compatibility}{
+The ability of manifests, schemas, domain packs, task versions, and graph
+structures to work together without semantic or validation conflicts.
+}
+
+\termrow{coverage}{
+The set of task kinds, domains, features, metrics, observation points, or risks
+covered by a model, manifest, or domain pack. Coverage is not the same as global
+completeness.
+}
+
+\termrow{known gap}{
+A missing, unavailable, weak, or intentionally unsupported feature, observation,
+domain, or graph relationship. Known gaps should remain visible rather than
+being hidden inside the model.
+}
+
+\termrow{residual visibility}{
+The ability of the model to expose unexplained behavior through residual error,
+reduced confidence, or missing-feature indicators.
+}
+
+\termrow{canonical namespace}{
+A stable naming scheme for canonical features, resource dimensions, occupancy
+dimensions, and risk dimensions, such as \texttt{context.network.instability}
+or \texttt{occupancy.worker.slot\_time}.
+}
+
+\end{longtable}

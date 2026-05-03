@@ -1,0 +1,15 @@
+task_class: validation.json
+version: v1
+
+classification:
+  execution_shape:
+    - short
+    - deterministic
+  dominant_resources:
+    - cpu
+  entropy_class: low
+  consequence_class: low
+
+profiling_policy:
+  default_level: minimal_accounting
+  sampling: very_low_rate
