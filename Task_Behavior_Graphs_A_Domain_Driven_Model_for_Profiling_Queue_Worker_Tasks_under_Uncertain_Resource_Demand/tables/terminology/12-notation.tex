@@ -56,8 +56,8 @@ The set of canonical features.
 }
 
 \termrow{$z_a$}{
-The canonical feature vector available for attempt $a$ after feature mapping
-and normalization. The vector may be partial and may include explicit
+The canonical input-feature vector available for attempt $a$ after feature
+mapping and normalization. The vector may be partial and may include explicit
 missingness indicators.
 }
 
@@ -77,6 +77,18 @@ The intrinsic-feature projection $P_X(z_a)$ for attempt $a$.
 The execution-context projection $P_C(z_a)$ for attempt $a$.
 }
 
+\termrow{$\mathcal{X}_k$}{
+The intrinsic-feature space for task kind $k$.
+}
+
+\termrow{$\mathcal{C}_k$}{
+The execution-context feature space for task kind $k$.
+}
+
+\termrow{$\Theta_k$}{
+The model-state space for task kind $k$.
+}
+
 \termrow{$\theta_k$}{
 Task-kind-specific model state for task kind $k$, including declared
 descriptors, learned parameters, historical summaries, calibration data,
@@ -84,7 +96,9 @@ quantile sketches, residual statistics, or domain rules.
 }
 
 \termrow{$F_k$}{
-The task-kind-specific cost estimator for task kind $k$.
+The task-kind-specific cost estimator for task kind $k$, represented as the
+collection of dimension-specific estimators for the cost dimensions in
+$\mathcal{Q}_k$.
 }
 
 \termrow{$\mathcal{R}$}{
@@ -100,8 +114,17 @@ The typed disjoint union of cost dimensions,
 $\mathcal{Q} = \mathcal{R} \dot{\cup} \mathcal{O}$.
 }
 
+\termrow{$\mathcal{R}_k$}{
+The resource-demand dimensions relevant to task kind $k$.
+}
+
+\termrow{$\mathcal{O}_k$}{
+The worker-occupancy dimensions relevant to task kind $k$.
+}
+
 \termrow{$\mathcal{Q}_k$}{
-The subset of cost dimensions relevant to task kind $k$.
+The cost dimensions relevant to task kind $k$,
+$\mathcal{Q}_k = \mathcal{R}_k \dot{\cup} \mathcal{O}_k$.
 }
 
 \termrow{$q \in \mathcal{Q}$}{
@@ -135,17 +158,36 @@ The observation semantics for cost dimension $q$.
 }
 
 \termrow{$\kappa_q$}{
-The composition semantics or composition operator for cost dimension $q$.
+The composition operator for cost dimension $q$.
+}
+
+\termrow{$\mathcal{E}_q$}{
+The estimate-object space for cost dimension $q$.
+}
+
+\termrow{$\widehat{E}_q(a)$}{
+The estimate object for cost dimension $q$ during attempt $a$.
+}
+
+\termrow{$\operatorname{point}_q$}{
+Projection from an estimate object in $\mathcal{E}_q$ to a point estimate in
+$\mathcal{V}_q$.
+}
+
+\termrow{$\operatorname{quantile}_{q,p}$}{
+Projection from an estimate object in $\mathcal{E}_q$ to a $p$-quantile
+estimate in $\mathcal{V}_q$, when the estimate object supports distributional
+information.
 }
 
 \termrow{$\widehat{D}_r(a)$}{
-Estimated resource demand for resource dimension $r \in \mathcal{R}$ during
-attempt $a$.
+Estimated resource demand for resource dimension $r \in \mathcal{R}_{k_a}$
+during attempt $a$.
 }
 
 \termrow{$\widehat{U}_o(a)$}{
-Estimated worker occupancy for occupancy dimension $o \in \mathcal{O}$ during
-attempt $a$.
+Estimated worker occupancy for occupancy dimension $o \in \mathcal{O}_{k_a}$
+during attempt $a$.
 }
 
 \termrow{$\widehat{\mathbf{D}}(a)$}{
@@ -166,9 +208,8 @@ The dimension-specific estimator for task kind $k$ and cost dimension $q$.
 }
 
 \termrow{$\widehat{Y}_q(a)$}{
-The estimated value for cost dimension $q \in \mathcal{Q}_{k_a}$ during attempt
-$a$. This is a dimension-generic notation used when the same expression applies
-to both resource-demand and worker-occupancy dimensions.
+The point estimate for cost dimension $q \in \mathcal{Q}_{k_a}$ during attempt
+$a$, obtained as $\operatorname{point}_q(\widehat{E}_q(a))$.
 }
 
 \termrow{$Y_q(a)$}{
@@ -197,6 +238,15 @@ $Y_q(a) - \widehat{Y}_q(a)$.
 \termrow{$\widehat{Y}_{q,p}(a)$}{
 The estimated $p$-quantile or percentile-level value for cost dimension $q$
 during attempt $a$.
+}
+
+\termrow{$\widehat{\mathbf{C}}_{\mathrm{base}}(a)$}{
+The cost estimate for attempt $a$ excluding additional profiling overhead.
+}
+
+\termrow{$\widehat{\mathbf{C}}_{\rho}(a)$}{
+The cost estimate for attempt $a$ including overhead associated with an already
+selected profiling policy $\rho$.
 }
 
 \termrow{$\mathrm{Risk}(a)$}{

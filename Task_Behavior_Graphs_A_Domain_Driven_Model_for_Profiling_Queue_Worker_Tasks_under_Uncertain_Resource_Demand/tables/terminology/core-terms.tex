@@ -85,6 +85,13 @@ value domain, attribution boundary, observation semantics, and composition
 semantics.
 }
 
+\termrow{estimate object}{
+A dimension-level estimate produced by a task-kind-specific estimator. An
+estimate object may contain a point estimate, quantile estimates,
+distributional summaries, conservative envelopes, missingness information, or
+other data used by later uncertainty and policy layers.
+}
+
 \termrow{resource demand}{
 The modeled active resource need expected for a task attempt along a resource
 dimension, such as CPU time, memory peak, disk I/O, network I/O, runtime
@@ -108,6 +115,13 @@ during which the corresponding capacity is assigned to the attempt.
 \termrow{worker-slot time}{
 The time during which a task attempt holds a worker execution slot. This is the
 core worker-occupancy dimension in queue-worker systems.
+}
+
+\termrow{reliability diagnostics}{
+Model-side diagnostics that describe the reliability of a cost estimate, such
+as residuals, uncertainty indicators, confidence values, drift indicators,
+missing-feature signals, insufficient-history indicators, and tail-behavior
+summaries.
 }
 
 \termrow{uncertainty}{

@@ -1,32 +1,28 @@
 \section{Task Cost Model}
 \label{sec:task-cost-model}
 
-Section~\ref{sec:problem-statement} states that task profiling should produce a
-structured estimate rather than a single scalar load value. This section defines
-the cost-side part of that estimate. The full profiling problem has several
-outputs: cost estimates, reliability diagnostics, risk interpretation, and a
-profiling-policy recommendation. This section models only the first output
-class: attempt-attributed cost.
+Section~\ref{sec:problem-statement} states that task profiling produces several
+classes of outputs: cost estimates, reliability diagnostics, risk
+interpretation, and profiling-policy recommendations. This section defines only
+the first class. The cost model estimates attempt-attributed active resource
+demand and worker occupancy. It does not define uncertainty metrics, risk
+scoring, graph topology, raw-observation mapping, or policy selection.
 
-In this paper, task cost has two primary output families: active resource demand
-and bounded worker occupancy. Execution overhead is not a third independent
-output family. It is modeled as a contribution to one or more resource-demand or
-worker-occupancy dimensions. Operational risk is not part of task cost; it is a
-downstream interpretation of cost estimates, uncertainty, consequences, and
-policy context.
+The section is organized from concrete modeling object to estimation machinery.
+It first defines the attempt-level cost object. It then separates resource
+demand from worker occupancy, introduces the feature and model-state inputs used
+to evaluate the model, defines typed cost dimensions, introduces dimension-level
+estimate objects, and only then defines estimators, overhead, observations,
+residuals, and distributional estimates.
 
-The section proceeds from the unit of analysis to the dimensional model. It
-first defines attempt-level cost. It then introduces typed cost dimensions,
-task-kind-specific estimator state, dimension-specific estimator forms, observed
-values, residuals, and distributional estimates.
-
-\subsection{Cost as an Attempt-Level Quantity}
+\subsection{Attempt-Level Cost Object}
 \label{sec:cost-attempt-level}
 
 The cost model is defined at task-attempt granularity. A task kind determines
 the reusable model structure, a task instance supplies intrinsic work features,
 and a task attempt is the concrete execution in which demand, occupancy,
-observations, outcomes, and residuals are realized.
+observations, outcomes, and residuals are realized. The model separates
+kind-level structure from attempt-level evaluation.
 
 Let $a \in \mathcal{A}$ be a task attempt. The attempt executes task instance
 $i(a) \in \mathcal{I}$, whose task kind is $k(i(a)) \in \mathcal{K}$. For
@@ -34,47 +30,22 @@ readability, write
 \[
 k_a = k(i(a)).
 \]
-Let $z_a$ be the canonical feature vector available for attempt $a$ after
-feature mapping and normalization. The vector may be partial: missing values and
-unknown context should be represented explicitly rather than silently treated as
-zero. We use two role-specific projections:
-\[
-\mathbf{x}_a = P_X(z_a),
-\qquad
-\mathbf{c}_a = P_C(z_a),
-\]
-where $\mathbf{x}_a$ contains intrinsic task features and $\mathbf{c}_a$
-contains execution-context features. Intrinsic features describe the work
-contained in the task instance, such as payload size, record count, object
-count, batch size, operation mode, or domain metadata. Execution-context
-features describe the environment and state around the attempt, such as worker
-state, node pressure, dependency health, network condition, disk pressure, cache
-state, retry state, tenant pressure, or domain-specific state.
-
-For each task kind $k$, the model may maintain task-kind-specific state
-$\theta_k$. This state may contain declared descriptors, learned parameters,
-historical summaries, calibration values, quantile sketches, residual
-statistics, or domain rules. The paper does not require one learning algorithm.
-The state $\theta_k$ represents the reusable information used to evaluate
-attempts of kind $k$.
-
-The cost estimate for attempt $a$ is produced by a task-kind-specific estimator:
-\[
-\widehat{\mathbf{C}}(a)
-=
-F_{k_a}\!\left(\mathbf{x}_a,\mathbf{c}_a;\theta_{k_a}\right).
-\]
-The estimator returns a structured object rather than a scalar. It contains
-active resource-demand estimates and worker-occupancy estimates:
+The cost estimate for attempt $a$ is a structured object:
 \[
 \widehat{\mathbf{C}}(a)
 =
 \left(
 \widehat{\mathbf{D}}(a),
 \widehat{\mathbf{U}}(a)
-\right),
+\right).
 \]
-where
+The vector $\widehat{\mathbf{D}}(a)$ contains active resource-demand estimates,
+and $\widehat{\mathbf{U}}(a)$ contains worker-occupancy estimates. The cost
+object has no universal scalar value.
+
+For a task kind $k$, let $\mathcal{R}_k$ be the resource-demand dimensions
+relevant to that kind and $\mathcal{O}_k$ be the worker-occupancy dimensions
+relevant to that kind. For attempt $a$, the estimate expands to
 \[
 \widehat{\mathbf{D}}(a)
 =
@@ -92,8 +63,8 @@ r \in \mathcal{R}_{k_a}
 o \in \mathcal{O}_{k_a}
 \right\}.
 \]
-The sets $\mathcal{R}_{k_a}$ and $\mathcal{O}_{k_a}$ are the resource-demand and
-worker-occupancy dimensions relevant for task kind $k_a$.
+Thus, the set of estimated dimensions is task-kind-specific, while the returned
+values are attempt-specific.
 
 A scalar may be derived from $\widehat{\mathbf{C}}(a)$ by a downstream policy,
 but such a scalar is not the cost model itself. For example, an admission policy
@@ -106,11 +77,119 @@ s_\rho(a)
 \widehat{\mathbf{U}}(a)
 \right)
 \]
-under policy $\rho$. The projection is policy-specific: it depends on the
-decision being made, the available capacity, and the relative importance
-assigned to dimensions. The cost model preserves the structured estimate because
-different dimensions have different units, attribution boundaries, observation
-semantics, and composition rules.
+under policy $\rho$. The projection is policy-specific. It depends on the
+decision being made, the available capacity, and the relative importance of
+dimensions. The cost model preserves the structured estimate because different
+dimensions have different units, attribution boundaries, observation semantics,
+and composition rules.
+
+\subsection{Resource Demand and Worker Occupancy}
+\label{sec:cost-demand-occupancy}
+
+The cost object contains two families of dimensions. Resource demand is the
+estimated amount of active resource use required by, or expected for, an attempt
+along a resource dimension. Observed resource usage is the measured
+attempt-attributed use of that resource when instrumentation provides
+attribution. Worker occupancy is bounded execution capacity held by an attempt
+over time.
+
+For $r \in \mathcal{R}_{k_a}$, $\widehat{D}_r(a)$ denotes the estimated resource
+demand of attempt $a$ for resource dimension $r$. Resource-demand dimensions may
+include CPU time, memory peak, allocation volume, disk reads, disk writes,
+network input, network output, or accelerator usage. These dimensions describe
+active resource work associated with the attempt rather than the ambient state
+of the worker, node, dependency, or queue.
+
+For $o \in \mathcal{O}_{k_a}$, $\widehat{U}_o(a)$ denotes the estimated worker
+occupancy of attempt $a$ for occupancy dimension $o$. Occupancy exists only over
+intervals in which the corresponding bounded capacity is assigned to the attempt
+and cannot be used by another compatible attempt. Examples include worker-slot
+time, lease time, connection hold time, lock hold time, semaphore hold time, and
+tenant-level concurrency time.
+
+For an occupancy dimension $o$, let $\mathcal{I}_{o,a}$ be the set of intervals
+during which the capacity associated with $o$ is held by attempt $a$. If the
+attempt can hold more than one unit of that capacity, let $m_o(t,a)$ denote the
+amount held at time $t$. An observed occupancy value can be understood as
+\[
+Y_o(a)
+=
+\int_{\bigcup \mathcal{I}_{o,a}}
+m_o(t,a)\,dt,
+\qquad
+o \in \mathcal{O}_{k_a},
+\]
+when the required interval observations are available. This expression is not a
+required implementation. It states the semantics: occupancy is capacity held over
+time, not elapsed time by itself.
+
+This distinction separates demand, occupancy, and pressure. Demand and
+occupancy are estimated or observed for the attempt. Pressure is a property of
+the execution context. CPU time is a resource-demand dimension; CPU saturation
+on the node is a context factor. Worker-slot time is occupancy attributed to an
+attempt; worker-pool pressure is the surrounding state of the pool. A context
+factor may influence a cost dimension, but it is not itself the cost dimension.
+
+Waiting and elapsed time require the same separation. Dependency health,
+network condition, connection-pool pressure, and retry state are context
+factors. Dependency wait time is an observed waiting signal. Wall-clock duration
+is an elapsed-time outcome. Worker-slot time and connection hold time are
+occupancy dimensions only when the corresponding bounded capacities remain held
+during the elapsed interval. A long dependency wait therefore increases
+worker-slot time only if the worker slot remains held.
+
+A compute-dominant transformation may have high CPU time and allocation volume
+but release its worker slot quickly. Conversely, an external-service or
+replication attempt may have low CPU demand but high worker-slot time,
+connection hold time, or lease time when a dependency is slow, a peer is
+degraded, or retries introduce backoff. Active resource demand alone would miss
+the second cost pattern.
+
+\subsection{Feature Projections and Model State}
+\label{sec:cost-feature-projections-model-state}
+
+The cost model is evaluated from per-attempt inputs and reusable task-kind state.
+Let $z_a$ be the canonical input-feature vector available for attempt $a$ after
+feature mapping and normalization. The vector may be partial and may include
+explicit missingness indicators. It contains input features used to estimate the
+attempt; it does not contain post-execution observed output values for the same
+attempt.
+
+Two projections separate the roles of canonical input features:
+\[
+\mathbf{x}_a = P_X(z_a),
+\qquad
+\mathbf{c}_a = P_C(z_a).
+\]
+The projection $\mathbf{x}_a$ contains intrinsic task features, such as payload
+size, record count, object count, batch size, operation mode, or domain metadata.
+The projection $\mathbf{c}_a$ contains execution-context features, such as
+worker state, node pressure, dependency health, network condition, disk
+pressure, cache state, retry state, tenant pressure, or domain-specific state.
+
+For each task kind $k$, the model may maintain task-kind-specific state
+$\theta_k \in \Theta_k$. This state is not an observation from attempt $a$.
+It is reusable state associated with task kind $k$ or a task family. It may be
+initialized from manifests, declared descriptors, domain rules, priors, or
+operator-provided defaults. It may be calibrated from historical attempts and
+revised when residuals indicate drift, missing features, or model error.
+
+The distinction is therefore:
+\[
+z_a
+\quad \text{is attempt-level canonical input,}
+\]
+\[
+\theta_{k_a}
+\quad \text{is reusable task-kind model state,}
+\]
+and
+\[
+Y_q(a)
+\quad \text{is an observed output value, if available.}
+\]
+This separation prevents the model from treating post-execution observations as
+if they were pre-execution input features for the same attempt.
 
 \subsection{Typed Cost Dimensions}
 \label{sec:cost-typed-dimensions}
@@ -144,17 +223,18 @@ u_q,
 Here $\rho_q \in \{\mathrm{resource},\mathrm{occupancy}\}$ is the role of the
 dimension, $u_q$ is its unit, $\mathcal{V}_q$ is its value domain,
 $\alpha_q$ is its attribution boundary, $\omega_q$ is its observation semantics,
-and $\kappa_q$ is its composition semantics.
+and $\kappa_q$ is its composition operator.
 
-The role $\rho_q$ determines whether the dimension belongs to active resource
-demand or worker occupancy. The unit $u_q$ may be seconds, bytes, operations,
-requests, slot-seconds, connection-seconds, lock-seconds, or another
-domain-specific unit. The value domain $\mathcal{V}_q$ is usually a
-non-negative subset of a unit-bearing numeric domain. The attribution boundary
-$\alpha_q$ specifies when an observed value belongs to attempt $a$. The
-observation semantics $\omega_q$ specifies how raw observations become an
-attempt-attributed observed value. The composition semantics $\kappa_q$
-specifies how component values combine.
+Each field has a specific purpose. The role determines whether the dimension is
+active resource demand or worker occupancy. The unit states how values are
+measured, such as seconds, bytes, operations, slot-seconds,
+connection-seconds, or lock-seconds. The value domain defines admissible values,
+usually a non-negative subset of a unit-bearing numeric domain. The attribution
+boundary states when a value belongs to attempt $a$. The observation semantics
+states how raw observations become an attempt-attributed observed value. The
+composition operator states how component values combine: by summation, maximum,
+interval union, critical path, retry expansion, or another dimension-specific
+rule.
 
 For example, CPU time is a resource-demand dimension whose component values
 typically compose by summation over attributed execution intervals. Memory peak
@@ -167,7 +247,13 @@ should not be forced into the same aggregation rule.
 
 For a task kind $k$, the model uses a task-kind-specific subset
 \[
-\mathcal{Q}_k \subseteq \mathcal{Q}.
+\mathcal{Q}_k
+=
+\mathcal{R}_k
+\dot{\cup}
+\mathcal{O}_k
+\subseteq
+\mathcal{Q}.
 \]
 The subset contains the cost dimensions relevant to that task kind. A
 CPU-oriented transformation may include CPU time, allocation volume, and memory
@@ -175,50 +261,43 @@ peak. A replication task may include network output, disk reads, disk writes,
 worker-slot time, connection hold time, and lease time. The model does not
 assume that every task kind uses every dimension.
 
-\subsection{Resource Demand and Worker Occupancy}
-\label{sec:cost-demand-occupancy}
+\subsection{Dimension Estimate Objects}
+\label{sec:cost-dimension-estimate-objects}
 
-The two families of cost dimensions have different meanings. Resource demand is
-the modeled amount of active resource usage expected for an attempt. Observed
-resource usage is the measured attempt-attributed value when instrumentation
-provides such attribution. Worker occupancy is bounded execution capacity held
-by an attempt over time.
+A dimension estimator does not have to return only one point value. It may
+return a richer estimate object that contains a point estimate, quantiles,
+distributional summaries, conservative envelopes, missingness information, or
+other data needed by later uncertainty and policy layers.
 
-For $r \in \mathcal{R}_{k_a}$, $\widehat{D}_r(a)$ denotes the estimated resource
-demand of attempt $a$ for resource dimension $r$. Resource-demand dimensions may
-include CPU time, memory peak, allocation volume, disk reads, disk writes,
-network input, network output, or accelerator usage. These dimensions describe
-active resource work associated with the attempt rather than the ambient state
-of the worker, node, dependency, or queue.
+For each cost dimension $q$, let $\mathcal{E}_q$ be the estimate-object space
+for that dimension. An estimate object for attempt $a$ and dimension $q$ is
+written
+\[
+\widehat{E}_q(a) \in \mathcal{E}_q.
+\]
+The point estimate is a projection of this object:
+\[
+\widehat{Y}_q(a)
+=
+\operatorname{point}_q\!\left(\widehat{E}_q(a)\right),
+\qquad
+\widehat{Y}_q(a) \in \mathcal{V}_q.
+\]
+When the estimate object contains distributional information, a quantile
+projection may also be defined:
+\[
+\widehat{Y}_{q,p}(a)
+=
+\operatorname{quantile}_{q,p}\!\left(\widehat{E}_q(a)\right),
+\qquad
+p \in (0,1).
+\]
 
-For $o \in \mathcal{O}_{k_a}$, $\widehat{U}_o(a)$ denotes the estimated worker
-occupancy of attempt $a$ for occupancy dimension $o$. Occupancy exists only over
-intervals in which the corresponding bounded capacity is assigned to the attempt
-and cannot be used by another compatible attempt. Examples include worker-slot
-time, lease time, connection hold time, lock hold time, semaphore hold time, and
-tenant-level concurrency time.
-
-This distinction separates demand, occupancy, and pressure. Demand and
-occupancy are estimated or observed for the attempt. Pressure is a property of
-the execution context. CPU time is a resource-demand dimension; CPU saturation
-on the node is a context factor. Worker-slot time is occupancy attributed to an
-attempt; worker-pool pressure is the surrounding state of the pool. A context
-factor may influence a cost dimension, but it is not itself the cost dimension.
-
-Waiting and elapsed time require the same care. Dependency health, network
-condition, connection-pool pressure, and retry state are context factors.
-Dependency wait time is an observed waiting signal. Wall-clock duration is an
-elapsed-time outcome. Worker-slot time and connection hold time are occupancy
-dimensions only when the corresponding bounded capacities remain held during the
-elapsed interval. A long dependency wait therefore increases worker-slot time
-only if the slot remains held.
-
-A compute-dominant transformation may have high CPU time and allocation volume
-but release its worker slot quickly. Conversely, an external-service or
-replication attempt may have low CPU demand but high worker-slot time,
-connection hold time, or lease time when a dependency is slow, a peer is
-degraded, or retries introduce backoff. Active resource demand alone would miss
-the second cost pattern.
+This design prevents distributional estimates from being attached to the model
+as an afterthought. A point estimate, a high-percentile estimate, and a
+conservative envelope are different projections of the same dimension-level
+estimate object. Later sections may attach uncertainty or confidence information
+to the same object or to a diagnostic object derived from it.
 
 \subsection{Dimension-Specific Estimators}
 \label{sec:cost-dimension-specific-estimators}
@@ -236,11 +315,11 @@ F_{k,q}
 \times
 \Theta_k
 \rightarrow
-\mathcal{V}_q.
+\mathcal{E}_q.
 \]
-For attempt $a$, the point estimate for dimension $q$ is
+For attempt $a$, the dimension-level estimate object is
 \[
-\widehat{Y}_q(a)
+\widehat{E}_q(a)
 =
 F_{k_a,q}\!\left(
 \mathbf{x}_a,
@@ -248,27 +327,41 @@ F_{k_a,q}\!\left(
 \theta_{k_a}
 \right).
 \]
-If $q \in \mathcal{R}_{k_a}$, then $\widehat{Y}_q(a)$ corresponds to a component
-of $\widehat{\mathbf{D}}(a)$. If $q \in \mathcal{O}_{k_a}$, then
-$\widehat{Y}_q(a)$ corresponds to a component of $\widehat{\mathbf{U}}(a)$.
-
-A common estimator form decomposes a dimension into intrinsic baseline,
-contextual amplification, and additive overhead:
+The full task-kind estimator is the collection of dimension-specific estimators:
 \[
-\widehat{Y}_q(a)
+F_k
 =
-\kappa_q\!\left(
+\left\{
+F_{k,q}
+\mid
+q \in \mathcal{Q}_k
+\right\}.
+\]
+Thus, the structured cost estimate is obtained by evaluating the relevant
+dimension estimators and grouping their projections into resource-demand and
+worker-occupancy vectors.
+
+Some dimensions can be estimated directly. Others can be estimated through a
+component model. A common component model decomposes a dimension into intrinsic
+baseline, contextual amplification, and additive overhead:
+\[
+\widehat{E}_q(a)
+=
+\operatorname{estimate}_q\!\left(
 \widehat{B}_q(k_a,\mathbf{x}_a;\theta_{k_a}),
 \widehat{A}_q(k_a,\mathbf{x}_a,\mathbf{c}_a;\theta_{k_a}),
-\widehat{O}_q(k_a,\mathbf{x}_a,\mathbf{c}_a;\theta_{k_a})
+\widehat{O}_q(k_a,\mathbf{x}_a,\mathbf{c}_a;\theta_{k_a}),
+\kappa_q
 \right).
 \]
 Here $\widehat{B}_q$ is the estimated intrinsic baseline,
 $\widehat{A}_q$ is the estimated contextual amplification factor, and
-$\widehat{O}_q$ is the estimated additive overhead contribution. The composition
-operator $\kappa_q$ is taken from the dimension descriptor $\Delta_q$.
+$\widehat{O}_q$ is the estimated overhead contribution. The operator
+$\kappa_q$ determines how these components are composed for dimension $q$.
 
-For additive dimensions, a useful specialization is the affine form
+For dimensions whose descriptor permits proportional amplification plus additive
+contribution, the point projection of the estimate object may use the affine
+specialization
 \[
 \widehat{Y}_q(a)
 =
@@ -278,17 +371,17 @@ For additive dimensions, a useful specialization is the affine form
 +
 \widehat{O}_q(k_a,\mathbf{x}_a,\mathbf{c}_a;\theta_{k_a}).
 \]
-This affine form is not a universal law. It is appropriate only when the
-dimension's composition semantics supports proportional amplification plus
-additive contribution. CPU time or network-transfer duration may often use such
-a form. Memory peak may require maximum-based composition. Worker-slot time may
-require interval or critical-path semantics. Retry-sensitive dimensions may
-require retry expansion.
+This affine form is not a universal law. CPU time or network-transfer duration
+may often use such a form. Memory peak may require maximum-based composition.
+Worker-slot time may require interval or critical-path semantics. Retry-sensitive
+dimensions may require retry expansion. A descriptor may also omit, fix, or
+replace one of the baseline, amplification, or overhead components when that
+component is not meaningful for the dimension.
 
-The terms have unit constraints. The estimate $\widehat{Y}_q(a)$, baseline
-$\widehat{B}_q$, and overhead $\widehat{O}_q$ are measured in the unit $u_q$.
-The amplification factor $\widehat{A}_q$ is dimensionless. In the usual cost
-setting, baseline and overhead are non-negative, and amplification is
+The terms have unit constraints. The point estimate $\widehat{Y}_q(a)$,
+baseline $\widehat{B}_q$, and overhead $\widehat{O}_q$ are measured in the unit
+$u_q$. The amplification factor $\widehat{A}_q$ is dimensionless. In the usual
+cost setting, baseline and overhead are non-negative, and amplification is
 non-negative. Suppression is represented by amplification below one rather than
 by negative cost.
 
@@ -297,8 +390,7 @@ does not assert that intrinsic work and execution context are statistically
 independent, nor does it require all dimensions to be linear. Its role is to
 separate three mechanisms: work implied by the task, contextual effects that
 modify that work, and additional overhead that is not well represented as a
-multiplier. The graph and manifest sections later make these mechanisms explicit
-for each task kind.
+multiplier.
 
 \subsection{Execution Overhead and Profiling Overhead}
 \label{sec:cost-overhead-types}
@@ -315,21 +407,39 @@ time, or other dimensions depending on their attribution.
 
 Profiling overhead is overhead introduced by observation policy. Examples
 include tracing, sampling, runtime profiling, high-cardinality label handling,
-telemetry export, and additional accounting. Profiling overhead can also
-contribute to cost dimensions when instrumentation is enabled. However, the
-decision to enable instrumentation belongs to the profiling-policy layer, not to
-the cost model. The cost model only represents the cost consequences once such
-instrumentation is part of the execution.
+telemetry export, and additional accounting. Profiling overhead can contribute
+to cost dimensions when instrumentation is enabled. However, the decision to
+enable instrumentation belongs to the profiling-policy layer, not to the cost
+model.
+
+When needed, the model can distinguish two estimates. A base estimate excludes
+additional profiling overhead:
+\[
+\widehat{\mathbf{C}}_{\mathrm{base}}(a).
+\]
+A policy-aware estimate includes the overhead of an already selected profiling
+policy $\rho$:
+\[
+\widehat{\mathbf{C}}_{\rho}(a).
+\]
+This distinction allows the cost model to represent instrumentation cost without
+making the profiling-policy decision inside the cost model itself.
 
 \subsection{Observed Values and Residuals}
 \label{sec:cost-residuals-usage}
 
-The model distinguishes estimates from observed values. Before or during
-execution, the profiler produces $\widehat{Y}_q(a)$ for a cost dimension
-$q \in \mathcal{Q}_{k_a}$. After execution, instrumentation may provide an
-observed value $Y_q(a)$ for the same dimension. The value $Y_q(a)$ is not raw
-telemetry. It is an attempt-attributed observed value produced according to the
-dimension's observation semantics $\omega_q$.
+The model distinguishes estimates from observed values. Before execution, the
+model may produce a pre-attempt estimate for planning or profiling-policy
+selection. During execution, the model may refine an estimate using partial
+observations. After execution, instrumentation may provide observed values for
+calibration and residual analysis.
+
+For a cost dimension $q \in \mathcal{Q}_{k_a}$, the observed value $Y_q(a)$ is
+not raw telemetry. It is an attempt-attributed observed value produced according
+to the dimension's observation semantics $\omega_q$. Node-level CPU utilization
+may be useful context, but it is not observed CPU usage for a particular
+attempt. Wall-clock duration may provide evidence, but it becomes an occupancy
+value only for the capacity that remains held during the corresponding interval.
 
 The residual is defined only when an observed value exists:
 \[
@@ -342,19 +452,12 @@ q \in \mathcal{Q}_{k_a}.
 Absence of a residual does not imply model accuracy; it may simply mean that the
 dimension was not observed.
 
-For $q \in \mathcal{R}_{k_a}$, $Y_q(a)$ is an attempt-attributed observed
-resource-usage value. For $q \in \mathcal{O}_{k_a}$, $Y_q(a)$ is an
-attempt-attributed observed occupancy value. Node-level CPU utilization may be
-useful context, but it is not observed CPU usage for a particular attempt.
-Wall-clock duration may provide evidence, but it becomes an occupancy value only
-for the capacity that remains held during the corresponding interval.
-
 Residuals are signals about the relation between the model and the workload. A
 large residual may indicate missing intrinsic features, stale context, hidden
 dependency state, an incorrect task-kind classification, model misspecification,
 measurement error, or a tail event. A small residual does not prove causal
-correctness; it only indicates that the estimate was close to the observed value
-for that attempt and dimension.
+correctness; it only indicates that the point estimate was close to the observed
+value for that attempt and dimension.
 
 Residuals connect the cost model to later uncertainty analysis. If residuals are
 large, systematic, or concentrated in particular contexts, the model may need
@@ -369,20 +472,15 @@ confidence, drift, and risk.
 Attempt-level cost is often variable even within the same task kind and feature
 bucket. A single mean estimate can hide behavior that matters operationally,
 especially for tasks with retries, dependency waits, lock contention, cache
-misses, or degraded peers. The cost model therefore allows each dimension to be
-estimated as a distribution or as a set of summary statistics rather than only
-as a point value.
+misses, or degraded peers. The estimate-object formulation therefore allows each
+dimension to carry distributional information rather than only one point value.
 
 For each task kind $k$ and dimension $q \in \mathcal{Q}_k$, the task-kind model
 state $\theta_k$ may contain distributional information, such as empirical
 histograms, quantile sketches, parametric distribution parameters, conservative
-envelopes, or prediction intervals. For quantile level $p \in (0,1)$, write
-\[
-\widehat{Y}_{q,p}(a)
-\]
-for a quantile estimate of dimension $q$ for attempt $a$. For example,
-$\widehat{Y}_{q,0.50}(a)$ may represent a median estimate and
-$\widehat{Y}_{q,0.99}(a)$ may represent a high-tail estimate.
+envelopes, or prediction intervals. The estimate object $\widehat{E}_q(a)$ may
+then expose quantile projections such as $\widehat{Y}_{q,0.50}(a)$ for a median
+estimate or $\widehat{Y}_{q,0.99}(a)$ for a high-tail estimate.
 
 Different decisions depend on different parts of the distribution. A mean
 CPU-time estimate may be sufficient for coarse accounting of stable compute
