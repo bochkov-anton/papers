@@ -23,8 +23,9 @@ important.
 
 \termrow{task kind}{
 The semantic type of work submitted to a queue. A task kind describes what work
-is requested, but it does not fully determine resource demand, worker
-occupancy, or risk under every execution context.
+is requested and selects reusable model structure, but it does not fully
+determine resource demand, worker occupancy, or risk under every execution
+context.
 }
 
 \termrow{task instance}{
@@ -52,10 +53,11 @@ outcome, uncertainty, and risk-relevant effects.
 }
 
 \termrow{execution context}{
-The environment and state under which a task attempt executes. Execution
-context includes worker state, node pressure, dependency health, network
-condition, disk pressure, cache state, tenant pressure, retry state, and other
-runtime or domain-specific conditions.
+The input-side environment and state under which a task attempt executes.
+Execution context includes worker state, node pressure, dependency health,
+network condition, disk pressure, cache state, tenant pressure, retry state, and
+other runtime or domain-specific conditions. It may influence cost, but it is
+not itself a cost output.
 }
 
 \termrow{observation}{
@@ -77,22 +79,30 @@ resource demand, worker occupancy, outcome, uncertainty, risk, and profiling
 observations.
 }
 
+\termrow{cost dimension}{
+A typed dimension of attempt-attributed cost. A cost dimension has a role, unit,
+value domain, attribution boundary, observation semantics, and composition
+semantics.
+}
+
 \termrow{resource demand}{
-The expected or required active resource need of a task attempt along a
-resource dimension, such as CPU time, memory peak, disk I/O, network I/O,
-runtime allocation, or accelerator usage. Resource demand is what the model
-estimates before or during execution.
+The modeled active resource need expected for a task attempt along a resource
+dimension, such as CPU time, memory peak, disk I/O, network I/O, runtime
+allocation, or accelerator usage. Resource demand is distinct from observed
+resource usage and from environment-side resource pressure.
 }
 
 \termrow{resource usage}{
-The observed actual use of a resource during execution. Resource usage is
-measured after or during execution and is distinct from estimated demand.
+The observed attempt-attributed use of a resource during execution. Resource
+usage is measured after or during execution and is distinct from estimated
+resource demand.
 }
 
 \termrow{worker occupancy}{
 Bounded execution capacity held by a task attempt over time, such as
 worker-slot time, lease time, connection hold time, lock hold time, semaphore
-hold time, or tenant-level concurrency time.
+hold time, or tenant-level concurrency time. Occupancy exists only for intervals
+during which the corresponding capacity is assigned to the attempt.
 }
 
 \termrow{worker-slot time}{

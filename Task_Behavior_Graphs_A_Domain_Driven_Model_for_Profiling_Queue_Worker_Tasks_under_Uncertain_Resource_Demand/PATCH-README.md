@@ -1,6 +1,6 @@
-# Structural refactor patch
+# Formal logic refactor patch
 
-This patch restructures the implemented early paper sections and notation.
+This patch resolves the current formal-model problems in the early sections.
 
 Included files:
 
@@ -10,33 +10,45 @@ Included files:
 - sections/04-problem-statement.tex
 - sections/05-task-cost-model.tex
 - tables/terminology/12-notation.tex
+- tables/terminology/core-terms.tex
 
-Main goals:
+Main changes:
 
-1. Make each section responsible for one role:
-   - 01: motivation, claim, contributions, roadmap.
-   - 02: compact terminology and notation.
-   - 03: explanatory background and role distinctions.
-   - 04: formal problem statement.
-   - 05: formal cost model.
+1. Cost dimensions are now typed descriptors, not metric names.
+   Each dimension q has:
+   - role rho_q
+   - unit u_q
+   - value domain V_q
+   - attribution boundary alpha_q
+   - observation semantics omega_q
+   - composition semantics kappa_q
 
-2. Remove repeated explanations across 01-05.
+2. The universal formula baseline * amplification + overhead is no longer
+   treated as the only cost law. It is now a common affine specialization.
+   The general model uses dimension-specific estimators and dimension-specific
+   composition semantics.
 
-3. Fix the formal inconsistency where cost included "overhead" as if it were a
-   third output family. The cost object now has two output families:
-   resource demand and worker occupancy. Overhead contributes to dimensions.
+3. Task-kind model state theta_k is introduced.
+   This links history, calibration, declared descriptors, residual statistics,
+   quantile sketches, and domain rules to the actual cost estimator.
 
-4. Fix notation that mixed observed usage and estimated demand.
-
-5. Make z_a, x_a, and c_a consistent:
+4. z_a, x_a, and c_a are formalized:
    - z_a is the canonical feature vector.
-   - x_a is the intrinsic-feature projection.
-   - c_a is the execution-context projection.
+   - x_a = P_X(z_a) is the intrinsic-feature projection.
+   - c_a = P_C(z_a) is the execution-context projection.
 
-6. Add dimension-generic cost notation:
-   - Q = R union O.
-   - Y_hat_q(a) is estimated value for a cost dimension.
-   - Y_q(a) is observed attempt-attributed value when available.
-   - epsilon_q(a) is residual.
+5. Observed values are clarified:
+   - Y_q(a) is not raw telemetry.
+   - It is an attempt-attributed observed value according to omega_q.
+   - residual epsilon_q(a) exists only when Y_q(a) exists.
 
-Apply by copying this archive contents over the paper root.
+6. Resource demand and worker occupancy are separated more strictly:
+   - resource demand is modeled expected active resource need;
+   - resource usage is observed attempt-attributed resource use;
+   - worker occupancy is capacity held during explicit intervals.
+
+7. Problem Statement now separates output classes:
+   - cost estimates;
+   - reliability diagnostics;
+   - risk interpretation;
+   - profiling-policy recommendation.

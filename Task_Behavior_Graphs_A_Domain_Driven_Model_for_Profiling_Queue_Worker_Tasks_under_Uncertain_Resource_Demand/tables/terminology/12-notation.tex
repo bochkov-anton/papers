@@ -43,6 +43,10 @@ The task kind of task instance $i$.
 The task instance executed by attempt $a$.
 }
 
+\termrow{$k_a$}{
+A shorthand for $k(i(a))$, the task kind of attempt $a$.
+}
+
 \termrow{$\mathcal{D}$}{
 The set of influence domains.
 }
@@ -53,29 +57,89 @@ The set of canonical features.
 
 \termrow{$z_a$}{
 The canonical feature vector available for attempt $a$ after feature mapping
-and normalization.
+and normalization. The vector may be partial and may include explicit
+missingness indicators.
+}
+
+\termrow{$P_X$}{
+The projection from $z_a$ to intrinsic task features.
+}
+
+\termrow{$P_C$}{
+The projection from $z_a$ to execution-context features.
+}
+
+\termrow{$\mathbf{x}_a$}{
+The intrinsic-feature projection $P_X(z_a)$ for attempt $a$.
+}
+
+\termrow{$\mathbf{c}_a$}{
+The execution-context projection $P_C(z_a)$ for attempt $a$.
+}
+
+\termrow{$\theta_k$}{
+Task-kind-specific model state for task kind $k$, including declared
+descriptors, learned parameters, historical summaries, calibration data,
+quantile sketches, residual statistics, or domain rules.
+}
+
+\termrow{$F_k$}{
+The task-kind-specific cost estimator for task kind $k$.
 }
 
 \termrow{$\mathcal{R}$}{
-The set of resource-demand dimensions.
+The set of active resource-demand dimensions.
 }
 
 \termrow{$\mathcal{O}$}{
 The set of worker-occupancy dimensions.
 }
 
-\termrow{$D_r(a)$}{
-Observed resource demand or usage for resource dimension $r \in \mathcal{R}$
-during attempt $a$.
+\termrow{$\mathcal{Q}$}{
+The typed disjoint union of cost dimensions,
+$\mathcal{Q} = \mathcal{R} \dot{\cup} \mathcal{O}$.
+}
+
+\termrow{$\mathcal{Q}_k$}{
+The subset of cost dimensions relevant to task kind $k$.
+}
+
+\termrow{$q \in \mathcal{Q}$}{
+A typed cost dimension, either a resource-demand dimension or a
+worker-occupancy dimension.
+}
+
+\termrow{$\Delta_q$}{
+The descriptor for cost dimension $q$, including role, unit, value domain,
+attribution boundary, observation semantics, and composition semantics.
+}
+
+\termrow{$\rho_q$}{
+The role of cost dimension $q$: resource demand or worker occupancy.
+}
+
+\termrow{$u_q$}{
+The unit of cost dimension $q$.
+}
+
+\termrow{$\mathcal{V}_q$}{
+The value domain of cost dimension $q$.
+}
+
+\termrow{$\alpha_q$}{
+The attribution boundary for cost dimension $q$.
+}
+
+\termrow{$\omega_q$}{
+The observation semantics for cost dimension $q$.
+}
+
+\termrow{$\kappa_q$}{
+The composition semantics or composition operator for cost dimension $q$.
 }
 
 \termrow{$\widehat{D}_r(a)$}{
 Estimated resource demand for resource dimension $r \in \mathcal{R}$ during
-attempt $a$.
-}
-
-\termrow{$U_o(a)$}{
-Observed worker occupancy for occupancy dimension $o \in \mathcal{O}$ during
 attempt $a$.
 }
 
@@ -84,14 +148,55 @@ Estimated worker occupancy for occupancy dimension $o \in \mathcal{O}$ during
 attempt $a$.
 }
 
-\termrow{$\epsilon_r(a)$}{
-Residual error for resource-demand dimension $r$, defined as the part of
-observed resource behavior not explained by the estimate.
+\termrow{$\widehat{\mathbf{D}}(a)$}{
+The resource-demand estimate vector for attempt $a$.
 }
 
-\termrow{$\epsilon_o(a)$}{
-Residual error for worker-occupancy dimension $o$, defined as the part of
-observed occupancy behavior not explained by the estimate.
+\termrow{$\widehat{\mathbf{U}}(a)$}{
+The worker-occupancy estimate vector for attempt $a$.
+}
+
+\termrow{$\widehat{\mathbf{C}}(a)$}{
+The structured attempt-level cost estimate, represented as
+$(\widehat{\mathbf{D}}(a), \widehat{\mathbf{U}}(a))$.
+}
+
+\termrow{$F_{k,q}$}{
+The dimension-specific estimator for task kind $k$ and cost dimension $q$.
+}
+
+\termrow{$\widehat{Y}_q(a)$}{
+The estimated value for cost dimension $q \in \mathcal{Q}_{k_a}$ during attempt
+$a$. This is a dimension-generic notation used when the same expression applies
+to both resource-demand and worker-occupancy dimensions.
+}
+
+\termrow{$Y_q(a)$}{
+The observed attempt-attributed value for cost dimension $q$, when such an
+observation is available. For $q \in \mathcal{R}$ this is observed resource
+usage; for $q \in \mathcal{O}$ this is observed worker occupancy.
+}
+
+\termrow{$\widehat{B}_q$}{
+The estimated intrinsic baseline function for cost dimension $q$.
+}
+
+\termrow{$\widehat{A}_q$}{
+The estimated contextual amplification factor for cost dimension $q$.
+}
+
+\termrow{$\widehat{O}_q$}{
+The estimated additive overhead function for cost dimension $q$.
+}
+
+\termrow{$\epsilon_q(a)$}{
+Residual error for cost dimension $q$, defined when $Y_q(a)$ is available as
+$Y_q(a) - \widehat{Y}_q(a)$.
+}
+
+\termrow{$\widehat{Y}_{q,p}(a)$}{
+The estimated $p$-quantile or percentile-level value for cost dimension $q$
+during attempt $a$.
 }
 
 \termrow{$\mathrm{Risk}(a)$}{

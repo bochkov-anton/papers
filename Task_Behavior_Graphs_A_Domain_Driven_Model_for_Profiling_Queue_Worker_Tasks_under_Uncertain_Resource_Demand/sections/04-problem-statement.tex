@@ -4,19 +4,15 @@
 The preceding section motivates a gap between available observations and the
 model needed to profile logical task attempts in queue-worker systems. This
 section states the problem addressed by the paper. It defines the system model,
-the information available to the profiler, the outputs expected from the
-profiling model, the main constraints, and the non-goals. The purpose is to
-separate the problem from the model proposed in later sections.
+available information, expected outputs, main constraints, assumptions, and
+non-goals. The purpose is to state the problem without introducing the full model
+that later sections define.
 
 At a high level, the problem is to estimate the behavior of a task attempt from
-its task kind, task-instance features, execution-context observations, and
-available history, while respecting profiling overhead. The estimate must not be
-reduced to a single scalar cost. It must preserve active resource demand,
-worker occupancy, uncertainty, and operational risk as distinct outputs because
-these quantities support different operational decisions. Throughout this
-section, execution context denotes input-side environmental state; resource
-demand and worker occupancy denote cost-side outputs attributed to the attempt;
-and operational risk denotes downstream consequence.
+its task identity, intrinsic task features, execution-context information,
+task-kind model state, and available history while respecting profiling
+overhead. The output is structured. It includes cost estimates, reliability
+diagnostics, risk interpretation, and a profiling-policy recommendation.
 
 \subsection{System Model}
 \label{sec:problem-system-model}
@@ -30,109 +26,99 @@ timeouts, cancellation, worker failure, or rescheduling.
 
 The profiling boundary is the task attempt. This boundary is narrower than a
 worker process, container, node, or worker pool, but broader than a single
-function call or trace span. An attempt may include multiple phases, such as
-input fetching, parsing, computation, dependency calls, retries, output writes,
-commits, acknowledgement, and cleanup. These phases may be sequential,
-parallel, conditional, retried, or partially overlapping. The paper does not
-assume that every phase is perfectly instrumented.
+function call or trace span. An attempt may include sequential, parallel,
+conditional, retried, or partially overlapping phases. The paper does not assume
+that every phase is perfectly instrumented.
 
-Each attempt executes under an execution context. The context is not the cost of
-the attempt. It is the surrounding state that may influence the cost. The
-context may include worker state, worker-pool pressure, node pressure,
-dependency health, network condition, disk pressure, cache state, replica state,
-tenant pressure, retry state, and domain-specific hidden state. Some context
-factors are directly observable, some are derived from raw observations, and
-some remain hidden. Hidden or missing factors are represented indirectly through
-residual error, uncertainty, and reduced confidence.
+Each task kind may have task-kind-specific model state. This state may contain
+declared descriptors, learned parameters, historical summaries, calibration
+data, quantile sketches, residual statistics, or domain rules. The model state
+is updated or validated from historical observations, but the paper does not
+require one specific learning algorithm.
+
+Each attempt executes under an execution context. Execution context is the
+input-side state surrounding the attempt; it is not the cost of the attempt. It
+may include worker state, worker-pool pressure, node pressure, dependency
+health, network condition, disk pressure, cache state, replica state, tenant
+pressure, retry state, and domain-specific hidden state. Some context factors
+are directly observable, some are derived from raw observations, and some remain
+hidden.
 
 The model is task-kind-specific. Different task kinds may require different
-features, different observation points, and different profiling policies. A
-replication task kind may be sensitive to network condition, replica health,
-replication lag, disk pressure, and retry state. A compute-oriented transform
-may be more sensitive to record count, algorithm mode, CPU pressure, allocation
-behavior, and memory pressure. The system therefore cannot assume one global
-feature set or one global metric list that is equally relevant to all task
-kinds.
+features, cost dimensions, observation points, composition rules, and profiling
+policies. A replication task may be sensitive to replica health and network
+condition. A compute-oriented transform may be more sensitive to record count,
+algorithm mode, CPU pressure, allocation behavior, and memory pressure. The
+problem therefore cannot assume one global feature set or one global metric list
+that is equally relevant to all task kinds.
 
 \subsection{Available Information}
 \label{sec:problem-available-information}
 
-For an attempt $a$, the profiler may have access to four classes of
-information. First, task identity describes what is being executed. It may
-include the task kind, task version, queue, producer, tenant, tenant class,
-priority, deadline, and attempt number. Task identity is necessary for selecting
-a task-kind-specific model, but it is not by itself a cost estimate.
+For an attempt $a$, the profiler may have access to five classes of information.
+
+First, task identity describes what is being executed. It may include the task
+kind, task version, queue, producer, tenant, priority, deadline, and attempt
+number. Task identity selects the relevant task-kind-specific model; it is not
+by itself a cost estimate.
 
 Second, intrinsic task features describe work contained in the task instance.
-Examples include payload size, record count, object count, partition size,
-batch size, input format, operation mode, declared resource hints, or domain
-metadata. These features may be available before execution and can provide a
-baseline for expected work. Their presence and precision are domain-specific.
+Examples include payload size, record count, object count, partition size, batch
+size, input format, operation mode, declared resource hints, or domain metadata.
+These features may be available before execution and can provide a baseline for
+expected work.
 
-Third, execution-context observations describe the environment in which the
-attempt is executed or is expected to execute. Examples include worker-pool
+Third, execution-context information describes the environment in which the
+attempt is executed or expected to execute. Examples include worker-pool
 pressure, node CPU or memory pressure, disk queue depth, network instability,
 dependency health, connection-pool pressure, cache warmth, replica health,
-replication lag, tenant quota usage, and retry state. These observations may be
-fresh, stale, missing, aggregated, or only indirectly related to the attempt.
-They are input-side conditions, not worker-occupancy values. For example,
-connection-pool pressure is context; connection hold time attributed to the
-attempt is occupancy.
+replication lag, tenant quota usage, and retry state. These values are
+input-side conditions. They may influence resource demand or worker occupancy,
+but they are not themselves worker-occupancy values.
 
-Fourth, historical observations describe previous attempts of the same or
-related task kinds. They may include observed resource usage, worker occupancy,
-durations, retry counts, outcomes, residual errors, tail quantiles, or drift
-indicators. Historical data may be unavailable for new task kinds, new task
-versions, rare contexts, or recently changed workloads. The problem must
-therefore support both calibrated and cold-start cases.
+Fourth, task-kind model state describes reusable information associated with the
+task kind or task family. It may include descriptors, estimator parameters,
+default priors, historical distributions, residual statistics, confidence
+values, or domain-specified rules.
+
+Fifth, historical observations describe previous attempts of the same or related
+task kinds. They may include observed resource usage, observed worker occupancy,
+durations, retry counts, outcomes, residuals, tail quantiles, or drift
+indicators. Historical data may be unavailable for new task kinds, new versions,
+rare contexts, or recently changed workloads. The problem must therefore support
+both calibrated and cold-start cases.
 
 Raw observations are not assumed to be model-ready. Metrics, logs, traces,
-runtime profiles, and domain events must first be interpreted, normalized, and
-mapped into canonical features. This mapping is part of the profiling problem
-because the same raw metric can play different roles in different domains, and
-similar operational influences can be exposed through different raw metrics.
+runtime profiles, and domain events must be interpreted, normalized, and mapped
+into canonical input features, observed output values, symptoms, outcomes, or
+risk evidence before the model can use them.
 
 \subsection{Desired Outputs}
 \label{sec:problem-desired-outputs}
 
-The profiler should produce a structured estimate for a task attempt or for a
-class of comparable attempts. The first output is an estimate of active resource
-demand. For each relevant resource dimension $r \in \mathcal{R}$, the model
-should estimate $\widehat{D}_r(a)$ or a distribution over possible values.
-Relevant dimensions may include CPU time, memory peak, disk reads, disk writes,
-network input, network output, allocation volume, or accelerator usage.
+The profiling problem produces four classes of outputs.
 
-The second output is an estimate of worker occupancy. For each relevant
-occupancy dimension $o \in \mathcal{O}$, the model should estimate
-$\widehat{U}_o(a)$ or a distribution over possible values. Relevant dimensions
-may include worker-slot time, lease time, connection hold time, lock hold time,
-semaphore hold time, and tenant concurrency time. Occupancy is modeled
-separately because an attempt can hold scarce execution capacity without
-consuming much active CPU or memory. Occupancy is also separate from
-execution-context pressure: worker-pool pressure may influence an attempt, while
-worker-slot time is capacity held by that attempt.
+The first output class is cost estimates. These include active resource-demand
+estimates over relevant resource dimensions and worker-occupancy estimates over
+relevant occupancy dimensions. Cost estimates may be point estimates,
+distributional estimates, or conservative envelopes.
 
-The third output is uncertainty and confidence. The model should indicate how
-reliable its estimates are, whether residual error is expected to be high,
-whether behavior has drifted, whether historical samples are insufficient, and
-whether tail behavior is operationally significant. The paper does not require a
-single universal uncertainty metric. Later sections may use residuals,
-confidence values, quantile ratios, drift indicators, or other measures where
-appropriate.
+The second output class is reliability diagnostics. These include residuals,
+uncertainty indicators, confidence values, drift indicators, missing-feature
+signals, insufficient-history indicators, and tail-behavior summaries. These
+diagnostics describe how reliable the cost estimates are; they are not
+themselves active resource demand or worker occupancy.
 
-The fourth output is operational risk. Risk is not the same as task cost. It
-captures the consequence of underestimating, misclassifying, or mishandling an
-attempt. Relevant risks may include queue starvation, retry amplification,
-SLO violation, replication lag, tenant impact, dependency overload, and
-cascading overload. Risk depends not only on estimated demand and occupancy but
-also on the blast radius and the operational meaning of the task kind.
+The third output class is operational-risk interpretation. Risk is not the same
+as task cost. It captures the consequence of underestimating, misclassifying, or
+mishandling an attempt. Relevant risks may include queue starvation, retry
+amplification, SLO violation, replication lag, tenant impact, dependency
+overload, and cascading overload.
 
-The fifth output is a profiling-policy recommendation. Given the task kind,
-context, uncertainty, risk, and profiling budget, the system should determine
-what observation strategy is justified. Possible strategies include minimal
-accounting, detailed accounting, sampled tracing, tail-aware profiling,
-diagnostic profiling, or isolated diagnostic execution. The policy output is a
-profiling decision, not a final scheduling or routing decision.
+The fourth output class is a profiling-policy recommendation. Given the task
+kind, context, reliability diagnostics, risk, and profiling budget, the system
+should determine what observation strategy is justified. The policy output is a
+profiling decision, not a final scheduling, routing, or placement decision.
 
 \subsection{Core Challenges}
 \label{sec:problem-core-challenges}
@@ -140,49 +126,49 @@ profiling decision, not a final scheduling or routing decision.
 The first challenge is conditional behavior. Attempts with the same task kind
 and similar intrinsic features may behave differently under different execution
 contexts. A model based only on task kind, queue, or payload bucket can provide a
-baseline, but it cannot explain context-dependent amplification, suppression,
-or drift.
+baseline, but it cannot explain context-dependent amplification, suppression, or
+drift.
 
 The second challenge is multidimensionality. Active resource demand, bounded
-worker occupancy, execution-context pressure, uncertainty, and operational risk
-have different meanings and units. Combining them prematurely into one scalar
-hides information needed by downstream control layers. A scalar score may be a
-useful projection, but it should be derived from a structured estimate rather
-than replace it.
+worker occupancy, reliability diagnostics, and operational risk have different
+meanings and units. Combining them prematurely into one scalar hides information
+needed by downstream control layers. A scalar score may be useful, but it should
+be a projection of a structured estimate rather than a replacement for it.
 
-The third challenge is attribution. Process-level, container-level, node-level,
-and queue-level observations are often easier to collect than task-attempt-level
-observations. These aggregate observations may indicate pressure, but they do
-not automatically explain which task kind, instance, attempt, phase, context
-factor, or dependency produced it.
+The third challenge is typed cost semantics. CPU time, memory peak, network
+bytes, worker-slot time, and lock hold time do not compose in the same way. Some
+dimensions sum, some take maxima, some are interval measures, and some follow
+critical-path or retry-expansion semantics. A profiling model must therefore
+treat cost dimensions as typed descriptors rather than as metric names.
 
-The fourth challenge is semantic interpretation. Raw observations do not state
-whether they represent intrinsic work, execution context, active resource usage,
-worker occupancy, a symptom, an outcome, an uncertainty indicator, or a risk
-indicator. Without explicit semantic roles, a model may double-count related
-signals. For example, network instability, retry count, wall-clock duration,
-and worker-slot time may all reflect one degraded dependency path, but they
-should not be treated as independent causes. Network instability is context;
-retry count and wall-clock duration are symptoms or outcomes; worker-slot time
-is occupancy if the slot remains held.
+The fourth challenge is attribution. Process-level, container-level, node-level,
+and queue-level observations are often easier to collect than
+task-attempt-level observations. Aggregate observations may indicate pressure,
+but they do not automatically identify which task kind, instance, attempt,
+phase, context factor, or dependency produced the observed behavior.
 
-The fifth challenge is compositional behavior. A task kind may include multiple
-behavior components, such as CPU processing, network transfer, dependency calls,
-retries, commits, and cleanup. Some quantities compose by summation, some by
-maximum, some by critical path, and some by retry expansion or
-occupancy-specific rules. The profiling problem must therefore preserve enough
-structure to combine observations consistently.
+The fifth challenge is semantic interpretation. Raw observations do not state
+their model role. Without explicit semantic roles, a model may double-count
+related signals or treat symptoms as independent causes. The problem therefore
+requires a mapping from raw observations to canonical input features, observed
+output values, symptoms, outcomes, and risk evidence.
 
-The sixth challenge is partial observability. Important influences may be
+The sixth challenge is compositional behavior. A task kind may include CPU
+processing, network transfer, dependency calls, retries, commits, and cleanup.
+Some quantities compose by summation, some by maximum, some by critical path,
+and some by retry expansion or occupancy-specific rules. The profiling problem
+must preserve enough structure to combine component behavior consistently.
+
+The seventh challenge is partial observability. Important influences may be
 missing, stale, hidden, or domain-specific. The model cannot assume that all
-relevant state is observable. Instead, unexplained behavior should remain
-visible through residual error, reduced confidence, or a higher profiling level.
+relevant state is observable. Unexplained behavior should remain visible through
+residual error, reduced confidence, or a higher profiling level.
 
-The seventh challenge is profiling overhead. Instrumentation is not free.
-Detailed tracing, runtime profiling, high-cardinality labels, frequent
-sampling, and telemetry export can affect the workload being measured. A
-profiling model must therefore decide not only what would be useful to observe,
-but what is worth observing under an overhead budget.
+The eighth challenge is profiling overhead. Instrumentation is not free.
+Detailed tracing, runtime profiling, high-cardinality labels, frequent sampling,
+and telemetry export can affect the workload being measured. A profiling model
+must decide not only what would be useful to observe, but what is worth observing
+under an overhead budget.
 
 \subsection{Scope and Assumptions}
 \label{sec:problem-scope-assumptions}
@@ -191,23 +177,23 @@ This paper assumes that task attempts can be identified at least by task kind
 and attempt boundary. The model is less useful when all work is invisible inside
 one undifferentiated worker loop. The paper does not require perfect
 instrumentation, but it assumes that minimal accounting is possible for at least
-some attempts, including start, finish, outcome, and task identity.
+some attempts.
 
 The paper assumes that some task metadata or intrinsic features may be available
-before or during execution. The exact features are domain-specific. A small
-validation task, a replication task, an external API fan-out task, and a media
-transformation task need not expose the same feature set.
+before or during execution. The exact features are domain-specific. A validation
+task, replication task, external API fan-out task, and media transformation task
+need not expose the same feature set.
 
-The paper assumes that execution-context observations may be available but
-incomplete. These observations may come from workers, nodes, queues,
-dependencies, telemetry systems, domain services, or historical profiles. The
-model must tolerate missing, stale, noisy, or partially aggregated context.
+The paper assumes that execution-context information may be available but
+incomplete. It may come from workers, nodes, queues, dependencies, telemetry
+systems, domain services, or historical profiles. The model must tolerate
+missing, stale, noisy, or partially aggregated context.
 
 The paper assumes that profiling decisions are useful even when final
-scheduling, routing, placement, or admission decisions are made by another
-layer. The profiling model supplies structured estimates and observation
-policies. Downstream control layers may consume these outputs, but their full
-design is outside the scope of the paper.
+scheduling, routing, placement, or admission decisions are made by another layer.
+The profiling model supplies structured estimates and observation policies.
+Downstream control layers may consume these outputs, but their full design is
+outside the scope of the paper.
 
 The paper also assumes an open-world metric environment. No core system can know
 all possible domain-specific metrics in advance. The model must therefore allow
@@ -235,13 +221,13 @@ is a profiling model, not a causal proof.
 
 This paper does not attempt to define a globally complete taxonomy of all
 workload metrics. It assumes that new domains can introduce new observations,
-features, and behavior components. Completeness is task-kind- and domain-specific
-rather than global.
+features, and behavior components. Completeness is task-kind- and
+domain-specific rather than global.
 
 This paper does not require exact prediction for arbitrary tasks. The goal is to
 produce structured estimates, expose uncertainty, and guide profiling policy.
 High residual error, drift, missing features, or high tail risk are valid model
-outputs, not merely failures to hide.
+outputs, not failures to hide.
 
 Finally, this paper does not specify a full production implementation of a
 package manager, expression language, runtime virtual machine, or cross-language
