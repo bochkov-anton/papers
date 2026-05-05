@@ -1,5 +1,32 @@
 \section{Task Taxonomy}
 \label{sec:task-taxonomy}
 
-% TODO: Write this section.
+Task kinds differ in the features that explain their behavior, the cost
+dimensions they affect, and the contexts that amplify their costs. This section
+introduces a working taxonomy used by later examples. The taxonomy is not a
+complete classification of all workloads.
 
+Compute-transform tasks are shaped by record count, payload size, algorithm
+mode, CPU pressure, allocation behavior, and memory pressure. Their main cost
+dimensions are CPU time, allocation volume, and memory peak.
+
+I/O transfer tasks are shaped by byte count, object count, chunk size, disk
+pressure, network condition, and peer health. Their main cost dimensions are
+disk reads, disk writes, network input, network output, worker-slot time, and
+connection hold time.
+
+External-dependency tasks are shaped by dependency health, fan-out width,
+timeout policy, connection-pool pressure, and retry state. Their active CPU
+demand may be low while worker-slot time and connection hold time are high.
+
+Replication and repair tasks are shaped by payload size, replica count,
+divergence level, peer health, replication lag, disk pressure, and retry state.
+They often combine I/O transfer, coordination, and external-dependency behavior.
+
+Coordination-sensitive tasks are shaped by locks, leases, semaphores, tenant
+concurrency, and contention. Their active resource demand may be low while
+occupancy dominates system impact.
+
+A single task kind may combine several classes. Task Behavior Graphs represent
+this compositional behavior through typed nodes and edges rather than by forcing
+each task kind into one exclusive class.

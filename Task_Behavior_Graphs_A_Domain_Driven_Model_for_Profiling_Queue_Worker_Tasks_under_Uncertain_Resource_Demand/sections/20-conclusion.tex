@@ -1,5 +1,11 @@
 \section{Conclusion}
 \label{sec:conclusion}
 
-% TODO: Write this section.
-
+This paper introduced Task Behavior Graphs as a domain-driven model for
+profiling queue-worker task attempts under uncertain resource demand. The model
+separates task identity, intrinsic features, execution context, resource demand,
+worker occupancy, observations, diagnostics, risk, and profiling policy. The
+central contribution is a formal structure for representing task-kind-specific
+behavior and for deciding how much observation is justified. Future work should
+implement the manifest layer, validate the model on real queue workloads, and
+measure the overhead of policy-driven profiling.

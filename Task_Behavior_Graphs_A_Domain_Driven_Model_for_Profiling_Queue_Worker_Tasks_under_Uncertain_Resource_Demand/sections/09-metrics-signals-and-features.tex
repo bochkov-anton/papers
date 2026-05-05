@@ -1,5 +1,25 @@
 \section{Metrics, Signals, and Features}
 \label{sec:metrics-signals-features}
 
-% TODO: Write this section.
+Raw observations are not model variables. Metrics, spans, logs, runtime
+profiles, queue events, worker lifecycle events, and domain events become useful
+after they are mapped into semantic roles.
 
+Let $s$ be a raw signal from an observation source. A feature mapping is a typed
+transformation
+\[
+M_j:s\mapsto m_j,
+\]
+where $m_j$ is a derived model variable with an assigned influence domain. The
+target may be a canonical input feature, an observed cost value, a symptom, an
+outcome, diagnostic evidence, or risk evidence.
+
+The mapping target matters. A packet-loss metric may become a
+network-condition context feature. Worker reserve and release events may become
+observed worker-slot occupancy. A dependency timeout log may become a symptom or
+outcome. A sustained queue delay may become risk evidence.
+
+Canonical features form the input vector $z_a$. Observed output values such as
+$Y_q(a)$ are not part of $z_a$ for the same attempt; they are produced during or
+after execution and used for residuals, calibration, diagnostics, and future
+model updates.

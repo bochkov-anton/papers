@@ -1,5 +1,22 @@
 \section{Profiling Policy Selection}
 \label{sec:profiling-policy-selection}
 
-% TODO: Write this section.
+Profiling policy selection decides how much observation is justified. It
+consumes cost estimates, diagnostics, risk interpretation, and an observation
+budget. It does not decide final scheduling, routing, or placement.
 
+Let $\mathcal{P}$ be a set of available policies. A selector may be written as
+\[
+\rho(a)
+=
+\operatorname*{arg\,select}_{p\in\mathcal{P}}
+J_p\!\left(
+\widehat{\mathbf{C}}(a),
+\mathrm{Diag}(a),
+\mathrm{Risk}(a),
+B_{\mathrm{obs}}
+\right),
+\]
+where $B_{\mathrm{obs}}$ is the observation budget. A stable low-risk task may
+use minimal accounting. A high-tail or high-residual task may justify detailed
+accounting, tracing, or diagnostic profiling.

@@ -1,5 +1,35 @@
-\section{Entropy, Confidence, and Risk}
+\section{Uncertainty, Confidence, and Risk}
 \label{sec:entropy-confidence-risk}
 
-% TODO: Write this section.
+This section treats uncertainty as the primary concept. Entropy is optional and
+only meaningful when a discrete predictive distribution is defined.
 
+Let
+\[
+\mathrm{Diag}(a)
+=
+h_{\mathrm{diag}}\!\left(
+\widehat{\mathbf{C}}(a),
+\{\epsilon_q(a)\},
+z_a,
+\theta_{k_a}
+\right)
+\]
+denote reliability diagnostics when the required inputs are available.
+Diagnostics may include residual magnitude, missingness, sample scarcity, drift,
+tail ratio, multimodality, and estimator confidence.
+
+Risk is downstream from cost and diagnostics:
+\[
+\mathrm{Risk}(a)
+=
+g_{\mathrm{risk}}\!\left(
+\widehat{\mathbf{C}}(a),
+\mathrm{Diag}(a),
+S(a);
+\theta_{k_a}
+\right),
+\]
+where $S(a)$ denotes consequence information such as tenant criticality,
+dependency fragility, or queue-starvation impact. Risk is not active resource
+demand and is not worker occupancy.

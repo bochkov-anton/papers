@@ -1,1 +1,20 @@
-TODO
+Queue-worker systems execute heterogeneous operational work such as replication,
+repair, cache rebuilds, imports, external-service calls, validation, and media
+processing. Profiling such work is difficult because the behavior of a task
+attempt is not determined by task kind alone: intrinsic task features and
+execution context can change active resource demand, bounded worker occupancy,
+tail behavior, and the value of additional instrumentation. Existing metrics,
+traces, profiles, and resource-management models provide useful observations,
+but they do not by themselves define an attempt-attributed model that separates
+task identity, intrinsic work, execution context, cost, uncertainty, risk, and
+profiling policy.
+
+This paper develops Task Behavior Graphs, a domain-driven model for profiling
+queue-worker task attempts under uncertain resource demand. The model separates
+task kind, task instance, and task attempt; represents cost through typed
+resource-demand and worker-occupancy dimensions; treats raw observations as
+evidence that must be assigned semantic roles; and connects canonical features
+to cost estimates, reliability diagnostics, risk-relevant consequences, and
+profiling-policy triggers. The contribution is a formal modeling framework and
+worked structure for future implementations and evaluations, not an empirical
+claim about a particular production system.

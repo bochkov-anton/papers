@@ -1,5 +1,9 @@
-\section{Observation Points in Queue Workers}
+\section{Observation Points}
 \label{sec:observation-points}
 
-% TODO: Write this section.
-
+A queue-worker lifecycle exposes several observation points: enqueue, reserve,
+start, dependency call, retry, backoff, commit, acknowledge, fail, release, and
+cleanup. Each point can produce raw observations, but the model uses them only
+after role assignment. Reserve and release events may support worker-slot
+occupancy. Dependency acquire and release events may support connection-hold
+occupancy. Retry events may support symptoms, diagnostics, or context features.

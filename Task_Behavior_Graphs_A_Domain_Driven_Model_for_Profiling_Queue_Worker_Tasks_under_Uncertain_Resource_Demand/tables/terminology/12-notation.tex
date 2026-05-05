@@ -15,274 +15,69 @@ Symbol & Meaning \\
 \bottomrule
 \endfoot
 
-\termrow{$\mathcal{K}$}{
-The set of task kinds.
-}
-
-\termrow{$\mathcal{I}$}{
-The set of task instances.
-}
-
-\termrow{$\mathcal{A}$}{
-The set of task attempts.
-}
-
-\termrow{$i \in \mathcal{I}$}{
-A task instance.
-}
-
-\termrow{$a \in \mathcal{A}$}{
-A task attempt.
-}
-
-\termrow{$k(i) \in \mathcal{K}$}{
-The task kind of task instance $i$.
-}
-
-\termrow{$i(a) \in \mathcal{I}$}{
-The task instance executed by attempt $a$.
-}
-
-\termrow{$k_a$}{
-A shorthand for $k(i(a))$, the task kind of attempt $a$.
-}
-
-\termrow{$\mathcal{D}$}{
-The set of influence domains.
-}
-
-\termrow{$\mathcal{F}$}{
-The set of canonical features.
-}
-
-\termrow{$z_a$}{
-The canonical input-feature vector available for attempt $a$ after feature
-mapping and normalization. The vector may be partial and may include explicit
-missingness indicators.
-}
-
-\termrow{$P_X$}{
-The projection from $z_a$ to intrinsic task features.
-}
-
-\termrow{$P_C$}{
-The projection from $z_a$ to execution-context features.
-}
-
-\termrow{$\mathbf{x}_a$}{
-The intrinsic-feature projection $P_X(z_a)$ for attempt $a$.
-}
-
-\termrow{$\mathbf{c}_a$}{
-The execution-context projection $P_C(z_a)$ for attempt $a$.
-}
-
-\termrow{$\mathcal{X}_k$}{
-The intrinsic-feature space for task kind $k$.
-}
-
-\termrow{$\mathcal{C}_k$}{
-The execution-context feature space for task kind $k$.
-}
-
-\termrow{$\Theta_k$}{
-The model-state space for task kind $k$.
-}
-
-\termrow{$\theta_k$}{
-Task-kind-specific model state for task kind $k$, including declared
-descriptors, learned parameters, historical summaries, calibration data,
-quantile sketches, residual statistics, or domain rules.
-}
-
-\termrow{$F_k$}{
-The task-kind-specific cost estimator for task kind $k$, represented as the
-collection of dimension-specific estimators for the cost dimensions in
-$\mathcal{Q}_k$.
-}
-
-\termrow{$\mathcal{R}$}{
-The set of active resource-demand dimensions.
-}
-
-\termrow{$\mathcal{O}$}{
-The set of worker-occupancy dimensions.
-}
-
-\termrow{$\mathcal{Q}$}{
-The typed disjoint union of cost dimensions,
-$\mathcal{Q} = \mathcal{R} \dot{\cup} \mathcal{O}$.
-}
-
-\termrow{$\mathcal{R}_k$}{
-The resource-demand dimensions relevant to task kind $k$.
-}
-
-\termrow{$\mathcal{O}_k$}{
-The worker-occupancy dimensions relevant to task kind $k$.
-}
-
-\termrow{$\mathcal{Q}_k$}{
-The cost dimensions relevant to task kind $k$,
-$\mathcal{Q}_k = \mathcal{R}_k \dot{\cup} \mathcal{O}_k$.
-}
-
-\termrow{$q \in \mathcal{Q}$}{
-A typed cost dimension, either a resource-demand dimension or a
-worker-occupancy dimension.
-}
-
-\termrow{$\Delta_q$}{
-The descriptor for cost dimension $q$, including role, unit, value domain,
-attribution boundary, observation semantics, and composition semantics.
-}
-
-\termrow{$\rho_q$}{
-The role of cost dimension $q$: resource demand or worker occupancy.
-}
-
-\termrow{$u_q$}{
-The unit of cost dimension $q$.
-}
-
-\termrow{$\mathcal{V}_q$}{
-The value domain of cost dimension $q$.
-}
-
-\termrow{$\alpha_q$}{
-The attribution boundary for cost dimension $q$.
-}
-
-\termrow{$\omega_q$}{
-The observation semantics for cost dimension $q$.
-}
-
-\termrow{$\kappa_q$}{
-The composition operator for cost dimension $q$.
-}
-
-\termrow{$\mathcal{E}_q$}{
-The estimate-object space for cost dimension $q$.
-}
-
-\termrow{$\widehat{E}_q(a)$}{
-The estimate object for cost dimension $q$ during attempt $a$.
-}
-
-\termrow{$\operatorname{point}_q$}{
-Projection from an estimate object in $\mathcal{E}_q$ to a point estimate in
-$\mathcal{V}_q$.
-}
-
-\termrow{$\operatorname{quantile}_{q,p}$}{
-Projection from an estimate object in $\mathcal{E}_q$ to a $p$-quantile
-estimate in $\mathcal{V}_q$, when the estimate object supports distributional
-information.
-}
-
-\termrow{$\widehat{D}_r(a)$}{
-Estimated resource demand for resource dimension $r \in \mathcal{R}_{k_a}$
-during attempt $a$.
-}
-
-\termrow{$\widehat{U}_o(a)$}{
-Estimated worker occupancy for occupancy dimension $o \in \mathcal{O}_{k_a}$
-during attempt $a$.
-}
-
-\termrow{$\widehat{\mathbf{D}}(a)$}{
-The resource-demand estimate vector for attempt $a$.
-}
-
-\termrow{$\widehat{\mathbf{U}}(a)$}{
-The worker-occupancy estimate vector for attempt $a$.
-}
-
-\termrow{$\widehat{\mathbf{C}}(a)$}{
-The structured attempt-level cost estimate, represented as
-$(\widehat{\mathbf{D}}(a), \widehat{\mathbf{U}}(a))$.
-}
-
-\termrow{$F_{k,q}$}{
-The dimension-specific estimator for task kind $k$ and cost dimension $q$.
-}
-
-\termrow{$\widehat{Y}_q(a)$}{
-The point estimate for cost dimension $q \in \mathcal{Q}_{k_a}$ during attempt
-$a$, obtained as $\operatorname{point}_q(\widehat{E}_q(a))$.
-}
-
-\termrow{$Y_q(a)$}{
-The observed attempt-attributed value for cost dimension $q$, when such an
-observation is available. For $q \in \mathcal{R}$ this is observed resource
-usage; for $q \in \mathcal{O}$ this is observed worker occupancy.
-}
-
-\termrow{$\widehat{B}_q$}{
-The estimated intrinsic baseline function for cost dimension $q$.
-}
-
-\termrow{$\widehat{A}_q$}{
-The estimated contextual amplification factor for cost dimension $q$.
-}
-
-\termrow{$\widehat{O}_q$}{
-The estimated additive overhead function for cost dimension $q$.
-}
-
-\termrow{$\epsilon_q(a)$}{
-Residual error for cost dimension $q$, defined when $Y_q(a)$ is available as
-$Y_q(a) - \widehat{Y}_q(a)$.
-}
-
-\termrow{$\widehat{Y}_{q,p}(a)$}{
-The estimated $p$-quantile or percentile-level value for cost dimension $q$
-during attempt $a$.
-}
-
-\termrow{$\widehat{\mathbf{C}}_{\mathrm{base}}(a)$}{
-The cost estimate for attempt $a$ excluding additional profiling overhead.
-}
-
-\termrow{$\widehat{\mathbf{C}}_{\rho}(a)$}{
-The cost estimate for attempt $a$ including overhead associated with an already
-selected profiling policy $\rho$.
-}
-
-\termrow{$\mathrm{Risk}(a)$}{
-The operational-risk estimate for attempt $a$.
-}
-
-\termrow{$\mathcal{G}_k$}{
-The Task Behavior Graph associated with task kind $k$.
-}
-
-\termrow{$V_k$}{
-The set of nodes in Task Behavior Graph $\mathcal{G}_k$.
-}
-
-\termrow{$E_k$}{
-The set of edges in Task Behavior Graph $\mathcal{G}_k$.
-}
-
-\termrow{$v \in V_k$}{
-A node in Task Behavior Graph $\mathcal{G}_k$.
-}
-
-\termrow{$e \in E_k$}{
-An edge in Task Behavior Graph $\mathcal{G}_k$.
-}
-
-\termrow{$\delta(v)$}{
-The influence domain assigned to graph node $v$.
-}
-
-\termrow{$w_e$}{
-The estimated sensitivity or weight associated with graph edge $e$.
-}
-
-\termrow{$\gamma_e$}{
-The confidence value associated with graph edge $e$.
-}
+\termrow{$\mathcal{K}$}{The set of task kinds.}
+\termrow{$\mathcal{I}$}{The set of task instances.}
+\termrow{$\mathcal{A}$}{The set of task attempts.}
+\termrow{$i \in \mathcal{I}$}{A task instance.}
+\termrow{$a \in \mathcal{A}$}{A task attempt.}
+\termrow{$k(i) \in \mathcal{K}$}{The task kind of task instance $i$.}
+\termrow{$i(a) \in \mathcal{I}$}{The task instance executed by attempt $a$.}
+\termrow{$k_a$}{A shorthand for $k(i(a))$.}
+\termrow{$\mathcal{D}$}{The set of influence domains.}
+\termrow{$\mathcal{Z}_k$}{The canonical input-feature space for task kind $k$.}
+\termrow{$z_a \in \mathcal{Z}_{k_a}$}{The canonical input-feature vector available for attempt $a$.}
+\termrow{$\mathcal{X}_k$}{The intrinsic-feature space for task kind $k$.}
+\termrow{$\mathcal{C}_k$}{The execution-context feature space for task kind $k$.}
+\termrow{$P_X^k$}{The projection $P_X^k:\mathcal{Z}_k\rightarrow\mathcal{X}_k$.}
+\termrow{$P_C^k$}{The projection $P_C^k:\mathcal{Z}_k\rightarrow\mathcal{C}_k$.}
+\termrow{$\mathbf{x}_a$}{The intrinsic-feature projection $P_X^{k_a}(z_a)$.}
+\termrow{$\mathbf{c}_a$}{The execution-context projection $P_C^{k_a}(z_a)$.}
+\termrow{$\Theta_k$}{The model-state space for task kind $k$.}
+\termrow{$\theta_k \in \Theta_k$}{Task-kind-specific model state.}
+\termrow{$\mathcal{R}$}{The set of active resource-demand dimensions.}
+\termrow{$\mathcal{O}$}{The set of worker-occupancy dimensions.}
+\termrow{$\mathcal{Q}$}{The typed disjoint union $\mathcal{R}\dot{\cup}\mathcal{O}$.}
+\termrow{$\mathcal{R}_k$}{The resource-demand dimensions relevant to task kind $k$.}
+\termrow{$\mathcal{O}_k$}{The worker-occupancy dimensions relevant to task kind $k$.}
+\termrow{$\mathcal{Q}_k$}{The cost dimensions relevant to task kind $k$, $\mathcal{R}_k\dot{\cup}\mathcal{O}_k$.}
+\termrow{$q \in \mathcal{Q}$}{A typed cost dimension.}
+\termrow{$\Delta_q$}{The descriptor for cost dimension $q$.}
+\termrow{$\rho_q$}{The role of cost dimension $q$.}
+\termrow{$u_q$}{The unit of cost dimension $q$.}
+\termrow{$\mathcal{V}_q$}{The value domain of cost dimension $q$.}
+\termrow{$\alpha_q$}{The attribution boundary for cost dimension $q$.}
+\termrow{$\omega_q$}{The observation semantics for cost dimension $q$.}
+\termrow{$\kappa_q$}{The composition operator for cost dimension $q$.}
+\termrow{$\mathcal{E}_q$}{The estimate-object space for cost dimension $q$.}
+\termrow{$\widehat{E}_q(a)$}{The estimate object for cost dimension $q$ during attempt $a$.}
+\termrow{$\operatorname{point}_q$}{Projection from an estimate object to a point estimate.}
+\termrow{$\operatorname{quantile}_{q,p}$}{Projection from an estimate object to a $p$-quantile estimate, when supported.}
+\termrow{$\widehat{Y}_q(a)$}{The point estimate $\operatorname{point}_q(\widehat{E}_q(a))$.}
+\termrow{$\widehat{Y}_{q,p}(a)$}{The estimated $p$-quantile for cost dimension $q$.}
+\termrow{$Y_q(a)$}{The observed attempt-attributed value for cost dimension $q$, when available.}
+\termrow{$\epsilon_q(a)$}{Residual error $Y_q(a)-\widehat{Y}_q(a)$, when $Y_q(a)$ is available.}
+\termrow{$\widehat{\mathbf{D}}(a)$}{The resource-demand estimate-object vector for attempt $a$.}
+\termrow{$\widehat{\mathbf{U}}(a)$}{The worker-occupancy estimate-object vector for attempt $a$.}
+\termrow{$\widehat{\mathbf{C}}(a)$}{The structured attempt-level cost estimate $(\widehat{\mathbf{D}}(a),\widehat{\mathbf{U}}(a))$.}
+\termrow{$F_k$}{The task-kind-specific cost estimator for task kind $k$.}
+\termrow{$F_{k,q}$}{The dimension-specific estimator for task kind $k$ and dimension $q$.}
+\termrow{$\widehat{B}_q$}{The estimated intrinsic baseline function for dimension $q$.}
+\termrow{$\widehat{A}_q$}{The estimated contextual amplification factor for dimension $q$.}
+\termrow{$\widehat{O}_q$}{The estimated additive overhead function for dimension $q$.}
+\termrow{$\widehat{\mathbf{C}}_{\mathrm{base}}(a)$}{The cost estimate excluding additional profiling overhead.}
+\termrow{$\widehat{\mathbf{C}}_{\rho}(a)$}{The cost estimate including overhead from profiling policy $\rho$.}
+\termrow{$\mathcal{G}_k$}{The Task Behavior Graph associated with task kind $k$.}
+\termrow{$V_k$}{The node set of $\mathcal{G}_k$.}
+\termrow{$E_k$}{The edge set of $\mathcal{G}_k$.}
+\termrow{$v \in V_k$}{A graph node.}
+\termrow{$e \in E_k$}{A graph edge.}
+\termrow{$\delta(v)$}{The influence domain assigned to node $v$.}
+\termrow{$\tau(v)$}{The node type assigned to node $v$.}
+\termrow{$\lambda(e)$}{The edge role assigned to edge $e$.}
+\termrow{$w_e$}{The estimated sensitivity, weight, or parameter associated with edge $e$.}
+\termrow{$\gamma_e$}{The confidence value associated with edge $e$.}
+\termrow{$\mathrm{Diag}(a)$}{Reliability diagnostics for attempt $a$.}
+\termrow{$\mathrm{Risk}(a)$}{The operational-risk estimate for attempt $a$.}
+\termrow{$\rho(a)$}{The profiling policy selected for attempt $a$ or a comparable class of attempts.}
 
 \end{longtable}

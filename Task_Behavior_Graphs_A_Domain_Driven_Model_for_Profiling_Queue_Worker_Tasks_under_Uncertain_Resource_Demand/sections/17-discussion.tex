@@ -1,5 +1,8 @@
 \section{Discussion}
 \label{sec:discussion}
 
-% TODO: Write this section.
-
+The model is intentionally modular. Cost dimensions, graph nodes, observation
+mappings, diagnostics, and policies can evolve independently when their
+interfaces remain typed. This structure supports domain-specific extension, but
+it also introduces maintenance cost. A deployment must decide which task kinds
+justify detailed modeling and which can remain under coarse accounting.

@@ -1,5 +1,41 @@
 \section{Influence Domains}
 \label{sec:influence-domains}
 
-% TODO: Write this section.
+Influence domains assign semantic roles to model variables. They prevent the
+model from collapsing input context, observed symptoms, cost outputs,
+diagnostics, risks, and policy triggers into one undifferentiated metric space.
 
+Let
+\[
+\mathcal{D}
+=
+\{
+D_{\mathrm{id}},
+D_{\mathrm{intr}},
+D_{\mathrm{ctx}},
+D_{\mathrm{res}},
+D_{\mathrm{occ}},
+D_{\mathrm{sym}},
+D_{\mathrm{out}},
+D_{\mathrm{diag}},
+D_{\mathrm{risk}},
+D_{\mathrm{policy}}
+\}.
+\]
+The domains represent task identity, intrinsic features, execution context,
+resource demand, worker occupancy, symptoms, outcomes, reliability diagnostics,
+risk, and profiling-policy triggers.
+
+For any graph node $v$, the domain assignment is
+\[
+\delta(v)\in\mathcal{D}.
+\]
+The domain determines how the node may be used. Context nodes may influence cost
+nodes. Cost nodes may feed diagnostics. Diagnostics and outcomes may feed risk.
+Risk and diagnostics may feed policy triggers. These directions are modeling
+constraints, not claims of causal proof.
+
+The anti-double-counting rule is central. Network instability, dependency wait
+time, retry count, wall-clock duration, and worker-slot time may co-occur. The
+model must represent which signal is context, which is symptom, which is
+observed cost, and which is risk-relevant consequence before any aggregation.

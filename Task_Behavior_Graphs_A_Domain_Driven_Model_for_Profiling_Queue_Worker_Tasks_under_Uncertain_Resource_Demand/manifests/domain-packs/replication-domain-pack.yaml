@@ -1,12 +1,43 @@
 domain_pack: replication-domain-pack
-version: v1
+version: v0
+status: draft
 
-task_classes: []
+task_classes:
+  - id: replication.partition_copy
+    family: replication
+    intrinsic_features:
+      - payload_size_bytes
+      - object_count
+      - replica_count
+    context_features:
+      - peer_health
+      - network_condition
+      - disk_pressure
+      - retry_attempt
 
-metric_descriptors: []
+cost_dimensions:
+  - id: network_output_bytes
+    role: resource_demand
+    unit: byte
+    composition: sum
+  - id: worker_slot_time
+    role: worker_occupancy
+    unit: slot_second
+    composition: interval_union
+  - id: connection_hold_time
+    role: worker_occupancy
+    unit: connection_second
+    composition: interval_union
 
-feature_mappings: []
-
-behavior_graphs: []
-
-profiling_policies: []
+behavior_graphs:
+  - task_class: replication.partition_copy
+    edges:
+      - from: payload_size_bytes
+        to: network_output_bytes
+        role: baseline
+      - from: peer_health
+        to: worker_slot_time
+        role: amplification
+      - from: network_condition
+        to: connection_hold_time
+        role: amplification

@@ -1,5 +1,18 @@
 \section{Task Behavior Manifests}
 \label{sec:task-behavior-manifests}
 
-% TODO: Write this section.
+Task Behavior Manifests provide a declarative bridge between the model and
+implementation. A manifest declares task classes, canonical features, cost
+dimensions, observation mappings, graph fragments, diagnostics, and profiling
+policies.
 
+A replication manifest may declare \texttt{payload\_size\_bytes},
+\texttt{peer\_health}, \texttt{network\_condition}, and
+\texttt{retry\_attempt} as features; \texttt{network\_output\_bytes},
+\texttt{disk\_read\_bytes}, \texttt{worker\_slot\_time}, and
+\texttt{connection\_hold\_time} as cost dimensions; and graph edges from
+payload size to network output, from peer health to worker-slot time, and from
+retry state to connection-hold time.
+
+Manifests allow domain packs to extend the model without requiring the core
+system to know all possible domain metrics in advance.

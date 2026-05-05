@@ -1,5 +1,14 @@
 \section{Profiling Methods}
 \label{sec:profiling-methods}
 
-% TODO: Write this section.
+Profiling methods differ in precision, overhead, and attribution quality.
+Minimal accounting records task lifecycle events and basic outcomes. Detailed
+accounting records typed cost dimensions such as worker-slot intervals,
+connection-hold intervals, and byte counts. Tracing records causal structure
+across services and dependencies. Runtime profiling samples CPU, allocation, or
+blocking behavior. Diagnostic profiling enables more expensive observation for
+uncertain or high-risk task classes.
 
+No method is universally best. The profiling policy should select the lowest
+overhead method that provides enough evidence for the current uncertainty and
+risk level.
