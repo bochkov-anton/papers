@@ -44,8 +44,8 @@ k_a = k(i(a)).
 \]
 The symbol $k_a$ does not introduce a new entity. It is only a shorthand for the
 kind of the task instance executed by attempt $a$. This shorthand is useful
-because all task-kind-specific objects used below, such as relevant dimensions
-and estimator state, are selected by $k_a$.
+because all task-kind-specific objects used below, such as relevant dimensions,
+feature projections, and estimator state, are selected by $k_a$.
 
 The attempt-level cost estimate is a structured object:
 \[
@@ -65,7 +65,7 @@ that the estimate is vector-valued or structured rather than scalar.
 For task kind $k$, let $\mathcal{R}_k$ be the set of resource-demand dimensions
 that the model estimates for that kind, and let $\mathcal{O}_k$ be the set of
 worker-occupancy dimensions that the model estimates for that kind. For attempt
-$a$, the two components are
+$a$, the two components are the dimension-indexed families
 \[
 \widehat{\mathbf{D}}(a)
 =
@@ -83,8 +83,8 @@ r \in \mathcal{R}_{k_a}
 o \in \mathcal{O}_{k_a}
 \right\}.
 \]
-The elements of these sets are estimate objects, not only numeric point values.
-This distinction matters because the model may need to preserve a point
+The elements of these families are estimate objects, not only numeric point
+values. This distinction matters because the model may need to preserve a point
 estimate, tail quantiles, conservative envelopes, missingness information, and
 other diagnostic material for the same cost dimension. A downstream policy can
 choose which projection of an estimate object it needs, but the cost model
@@ -104,6 +104,14 @@ s_\rho(a)
 \]
 where $\pi_\rho$ is a policy-specific projection. However, $s_\rho(a)$ is not
 the cost model. It is a decision-specific view of the structured cost estimate.
+
+The execution context is not a third component of
+$\widehat{\mathbf{C}}(a)$. It is an input-side condition used by estimators.
+For example, degraded peer health may amplify the estimated worker-slot time of
+a replication attempt, but the resulting value is still an estimate for the
+worker-slot-time dimension. Treating peer health itself as a cost output would
+mix context with attempt-attributed cost and would make later attribution and
+risk interpretation ambiguous.
 
 As a running example, consider a replication task kind. The task kind may define
 resource-demand dimensions such as network output bytes and disk read bytes, and
@@ -138,7 +146,7 @@ dimension $r$. For CPU time, it may represent attributed CPU seconds. For
 network output, it may represent attributed bytes. For memory peak, it may
 represent a maximum rather than a sum. Therefore, a resource-demand dimension is
 not defined only by a metric name; it is defined by its descriptor, attribution
-boundary, and composition semantics.
+boundary, observation semantics, and composition operator.
 
 Worker occupancy describes bounded capacity held by an attempt. Examples
 include worker-slot time, lease time, connection hold time, lock hold time,
@@ -151,7 +159,9 @@ point projection is
 \operatorname{point}_o\!\left(\widehat{E}_o(a)\right).
 \]
 The unit of an occupancy dimension is usually a capacity-time unit, such as
-slot-seconds, connection-seconds, lock-seconds, or permit-seconds.
+slot-seconds, connection-seconds, lock-seconds, or permit-seconds. These units
+make explicit that occupancy is not merely elapsed time. It is elapsed time
+weighted by the amount of bounded capacity held by the attempt.
 
 The interval semantics of occupancy can be written explicitly. Let
 $\mathcal{T}_{o,a}$ be the set of time intervals during which the capacity
@@ -259,6 +269,13 @@ different meanings. For example, elapsed wall-clock time, worker-slot time,
 connection hold time, and dependency wait time are all durations, but they do
 not describe the same model role.
 
+The descriptor is part of the model definition for a dimension. It is not an
+observed runtime value and is not inferred from a single attempt. In an
+implementation, a descriptor may be supplied by a core dimension registry, a
+Task Behavior Manifest, or a domain-specific extension. The descriptor states
+how values of the dimension are typed, attributed to attempts, observed from raw
+telemetry, and composed across phases, intervals, or retries.
+
 Let
 \[
 \mathcal{Q}
@@ -284,7 +301,10 @@ u_q,
 Here $\rho_q$ is the role of the dimension, $u_q$ is the unit,
 $\mathcal{V}_q$ is the value domain, $\alpha_q$ is the attribution boundary,
 $\omega_q$ is the observation semantics, and $\kappa_q$ is the composition
-operator.
+operator. Membership in $\mathcal{R}$ or $\mathcal{O}$ determines the dimension
+family, but the explicit role field $\rho_q$ remains useful in descriptors,
+manifests, registries, and validation rules because it makes the intended role
+machine-checkable.
 
 Each field prevents a specific modeling error. The role $\rho_q$ prevents
 mixing active resource demand with worker occupancy. The unit $u_q$ prevents
@@ -306,6 +326,14 @@ the attempt holds a worker slot, and composition is interval-based. For
 connection hold time, the role is worker occupancy, the unit is
 connection-seconds, and observation requires acquire and release events for the
 connection.
+
+The interval expression for occupancy introduced above is one possible
+semantics encoded by $\kappa_q$. More generally, $\kappa_q$ specifies how a
+dimension reduces component-level observations or estimates to an attempt-level
+value. For additive resource work, $\kappa_q$ may be summation. For peak
+resources, it may be a maximum. For occupancy, it may be interval union with a
+capacity-time integral. For retry-sensitive work, it may expand over retry
+phases or repeated dependency calls.
 
 For a task kind $k$, the relevant cost dimensions are
 \[
@@ -430,12 +458,18 @@ intrinsic baseline, contextual amplification, and additive overhead:
 \kappa_q
 \right).
 \]
+This decomposition is a modeling pattern, not a required estimator interface.
+A descriptor or estimator may omit, fix, or replace any component when that
+component is not meaningful for the dimension.
+
 The baseline $\widehat{B}_q$ estimates the contribution implied by the task
-kind and intrinsic features under a reference context. The amplification factor
-$\widehat{A}_q$ estimates how execution context modifies that contribution. The
-overhead term $\widehat{O}_q$ estimates additional contribution that is not well
-represented as proportional to the baseline. The operator $\kappa_q$ determines
-how these components are composed for dimension $q$.
+kind and intrinsic features under a reference context. A reference context is a
+nominal or default execution context against which contextual amplification is
+measured. The amplification factor $\widehat{A}_q$ estimates how execution
+context modifies the baseline contribution. The overhead term $\widehat{O}_q$
+estimates additional contribution that is not well represented as proportional
+to the baseline. The operator $\kappa_q$ determines how these components are
+composed for dimension $q$.
 
 For dimensions whose descriptor permits proportional amplification plus additive
 contribution, the point projection may use the affine specialization
@@ -451,15 +485,16 @@ contribution, the point projection may use the affine specialization
 In this form, $\widehat{B}_q$ and $\widehat{O}_q$ have unit $u_q$, while
 $\widehat{A}_q$ is dimensionless. Values of $\widehat{A}_q$ above one represent
 amplification, values below one represent suppression, and value one represents
-no modeled contextual scaling.
+no modeled contextual scaling. A negative amplification is not used to represent
+suppression; suppression is represented by a non-negative factor below one.
 
 The affine form is not a universal law. It is appropriate only when the
 dimension supports proportional scaling and additive contribution. CPU time or
 some transfer-duration dimensions may fit this form. Memory peak may require a
 maximum-based operator. Worker-slot time may require interval or critical-path
 semantics. Retry-sensitive work may require retry expansion. A descriptor may
-also omit, fix, or replace one of the baseline, amplification, or overhead
-components when that component is not meaningful for the dimension.
+therefore choose a non-affine estimator even when the same task kind uses affine
+estimators for other dimensions.
 
 In the replication example, network output bytes may use payload size as a
 baseline feature. Peer health and network condition may amplify connection hold
@@ -496,10 +531,11 @@ policy $\rho$:
 \[
 \widehat{\mathbf{C}}_{\rho}(a).
 \]
-The cost model can represent both estimates, but it does not choose $\rho$.
-Policy selection is defined later. This separation prevents instrumentation
-from being treated as free while keeping the cost model independent of the
-policy decision.
+The symbol $\rho$ denotes a profiling policy, while $\rho_q$ denotes the role of
+a cost dimension. The subscript distinguishes the two uses. The cost model can
+represent both estimates, but it does not choose $\rho$. Policy selection is
+defined later. This separation prevents instrumentation from being treated as
+free while keeping the cost model independent of the policy decision.
 
 \subsection{Observed Values and Residuals}
 \label{sec:cost-residuals-usage}

@@ -9,12 +9,16 @@ front-loading lifecycle details, implementation terms, and domain-specific
 vocabulary before the problem is stated.
 
 The terminology is role-specific. A term describes one role in the model:
-identity, intrinsic work, execution context, observation, canonical feature,
-resource demand, worker occupancy, uncertainty, risk, or policy. A single
-operational event may connect several roles, but that connection does not make
-the roles equivalent. Section~\ref{sec:background} explains the most common
-confusions; this section fixes the vocabulary and notation used by the remaining
-sections.
+identity, intrinsic work, execution context, cost, symptom, outcome, reliability
+diagnostic, operational risk, or profiling-policy trigger. A single operational
+event may connect several roles, but that connection does not make the roles
+equivalent. A raw observation may therefore map to multiple model variables, but
+each graph node receives one primary influence-domain assignment. This
+one-domain rule is introduced formally in
+Section~\ref{sec:influence-domains}.
+
+Section~\ref{sec:background} explains the most common confusions; this section
+fixes the vocabulary and notation used by the remaining sections.
 
 \subsection{Core Terms}
 \label{sec:core-terms}

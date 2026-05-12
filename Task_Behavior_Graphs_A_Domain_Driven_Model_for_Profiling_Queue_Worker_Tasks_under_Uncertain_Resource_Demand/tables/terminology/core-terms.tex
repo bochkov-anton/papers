@@ -16,25 +16,133 @@ Term & Definition \\
 \endfoot
 
 \termrow{task}{A generic unit of work handled by a queue-worker system.}
-\termrow{task kind}{The semantic type of work submitted to a queue. A task kind selects reusable model structure, but does not determine one universal cost value.}
-\termrow{task instance}{A concrete logical unit of work placed into a queue. A task instance belongs to a task kind and may produce one or more attempts.}
-\termrow{task attempt}{One concrete execution of a task instance. Resource usage, worker occupancy, observations, outcomes, and residuals are estimated or observed at attempt granularity.}
-\termrow{worker}{An executor that reserves, executes, retries, acknowledges, discards, or fails task attempts.}
-\termrow{task behavior}{The broader profile of a task attempt or kind, including cost estimates, outcomes, reliability diagnostics, risk-relevant effects, and policy-relevant observations.}
-\termrow{execution context}{The input-side environment and state under which a task attempt executes. It may influence cost, but is not itself a cost output.}
-\termrow{observation}{Any measurement, event, trace, profile sample, counter, log entry, or domain-specific signal exposed by a system component.}
-\termrow{canonical feature}{A typed and normalized model input derived from task metadata, execution context, raw observations, or signals.}
-\termrow{influence domain}{A semantic role assigned to a model variable. Influence domains separate identity, intrinsic work, context, cost, symptoms, outcomes, diagnostics, risk, and policy triggers.}
-\termrow{cost dimension}{A typed dimension of attempt-attributed cost with role, unit, value domain, attribution boundary, observation semantics, and composition semantics.}
-\termrow{estimate object}{A dimension-level estimate that may contain a point value, quantiles, distributional summaries, conservative envelopes, missingness information, or other diagnostics.}
-\termrow{resource demand}{The modeled active resource need expected for a task attempt along a resource dimension. It is distinct from observed resource usage and environment-side pressure.}
-\termrow{resource usage}{The observed attempt-attributed use of a resource during execution.}
-\termrow{worker occupancy}{Bounded execution capacity held by a task attempt over time. Occupancy exists only during intervals in which the capacity is assigned to the attempt.}
-\termrow{worker-slot time}{The time during which a task attempt holds a worker execution slot.}
-\termrow{reliability diagnostics}{Diagnostics that describe the reliability of cost estimates, such as residuals, uncertainty indicators, confidence values, drift, missingness, insufficient history, and tail summaries.}
-\termrow{uncertainty}{Unreliability or unpredictability of a task behavior estimate.}
-\termrow{operational risk}{The consequence-weighted danger of underestimating, misclassifying, or mishandling a task attempt.}
-\termrow{Task Behavior Graph}{A typed directed graph associated with a task kind or family. It connects canonical features across influence domains and supports estimation of cost, diagnostics, risk, and policy triggers.}
-\termrow{profiling policy}{The selected observation and instrumentation strategy for a task kind, attempt, or execution context.}
+
+\termrow{task kind}{
+The semantic type of work submitted to a queue. A task kind selects reusable
+model structure, relevant features, cost dimensions, graph fragments, and
+profiling-policy priors, but it does not determine one universal cost value.
+}
+
+\termrow{task instance}{
+A concrete logical unit of work placed into a queue. A task instance belongs to
+a task kind and may produce one or more attempts.
+}
+
+\termrow{task attempt}{
+One concrete execution of a task instance. Resource usage, worker occupancy,
+observations, outcomes, and residuals are estimated or observed at attempt
+granularity.
+}
+
+\termrow{worker}{
+An executor that reserves, executes, retries, acknowledges, discards, or fails
+task attempts.
+}
+
+\termrow{task behavior}{
+The broader profile of a task attempt or kind, including cost estimates,
+symptoms, outcomes, reliability diagnostics, risk-relevant effects, and
+policy-relevant triggers.
+}
+
+\termrow{execution context}{
+The input-side environment and state under which a task attempt executes. It may
+influence cost, symptoms, outcomes, diagnostics, and risk, but it is not itself
+a cost output.
+}
+
+\termrow{observation}{
+Any measurement, event, trace, profile sample, counter, log entry, or
+domain-specific signal exposed by a system component. An observation becomes a
+model variable only after it is mapped to a semantic role.
+}
+
+\termrow{canonical feature}{
+A typed and normalized model input derived from task metadata, execution
+context, raw observations, or domain-specific signals. Canonical features form
+the input vector available to estimators.
+}
+
+\termrow{influence domain}{
+A semantic role assigned to a model variable. Influence domains separate task
+identity, intrinsic work, execution context, resource demand, worker occupancy,
+symptoms, outcomes, reliability diagnostics, operational risk, and
+profiling-policy triggers.
+}
+
+\termrow{cost dimension}{
+A typed dimension of attempt-attributed cost with role, unit, value domain,
+attribution boundary, observation semantics, and composition semantics.
+}
+
+\termrow{estimate object}{
+A dimension-level estimate that may contain a point value, quantiles,
+distributional summaries, conservative envelopes, missingness information, or
+other diagnostic material.
+}
+
+\termrow{resource demand}{
+The modeled active resource need expected for a task attempt along a resource
+dimension. It is distinct from observed resource usage and environment-side
+pressure.
+}
+
+\termrow{resource usage}{
+The observed attempt-attributed use of a resource during execution.
+}
+
+\termrow{worker occupancy}{
+Bounded execution capacity held by a task attempt over time. Occupancy exists
+only during intervals in which the capacity is assigned to the attempt.
+}
+
+\termrow{worker-slot time}{
+The time during which a task attempt holds a worker execution slot.
+}
+
+\termrow{symptom}{
+An intermediate observed signal that indicates abnormal or relevant behavior but
+is not itself a final outcome, a cost dimension, or a root-cause claim.
+}
+
+\termrow{outcome}{
+The completion or lifecycle result of a task attempt, such as success, failure,
+timeout, cancellation, retryable error, dead-lettering, or lease expiration.
+}
+
+\termrow{reliability diagnostic}{
+A diagnostic that describes the reliability of a cost estimate or behavior
+profile, such as residual magnitude, missingness, low sample support, drift,
+tail ratio, multimodality, or confidence.
+}
+
+\termrow{uncertainty}{
+Unreliability or unpredictability of a task behavior estimate. In this paper,
+uncertainty is represented through reliability diagnostics rather than treated
+as a cost dimension.
+}
+
+\termrow{operational risk}{
+The consequence-weighted danger of underestimating, misclassifying, or
+mishandling a task attempt. Risk is downstream from cost, diagnostics, outcomes,
+and consequence information.
+}
+
+\termrow{profiling-policy trigger}{
+A model variable or decision signal that selects or justifies an observation
+strategy, such as minimal accounting, detailed accounting, tracing, tail-aware
+profiling, or diagnostic profiling.
+}
+
+\termrow{Task Behavior Graph}{
+A typed directed graph associated with a task kind or family. It connects
+canonical features and derived model variables across influence domains and
+supports estimation of cost, diagnostics, risk, and profiling-policy triggers.
+}
+
+\termrow{profiling policy}{
+The selected observation and instrumentation strategy for a task kind, attempt,
+or execution context.
+}
 
 \end{longtable}

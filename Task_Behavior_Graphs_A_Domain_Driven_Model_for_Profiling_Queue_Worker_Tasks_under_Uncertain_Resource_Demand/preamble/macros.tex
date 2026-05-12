@@ -14,3 +14,13 @@
   \emph{#1} & #2 \tabularnewline
   \addlinespace[0.55em]%
 }
+
+\newenvironment{termstable}
+  {%
+    \begingroup
+    \renewcommand{\arraystretch}{1.22}%
+    \setlength{\extrarowheight}{2pt}%
+  }
+  {%
+    \endgroup
+  }

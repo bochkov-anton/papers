@@ -3,23 +3,34 @@
 
 Raw observations are not model variables. Metrics, spans, logs, runtime
 profiles, queue events, worker lifecycle events, and domain events become useful
-after they are mapped into semantic roles.
+only after they are mapped into typed model variables with assigned influence
+domains.
 
-Let $s$ be a raw signal from an observation source. A feature mapping is a typed
+Let $s$ be a raw signal from an observation source. A mapping rule is a typed
 transformation
 \[
 M_j:s\mapsto m_j,
 \]
-where $m_j$ is a derived model variable with an assigned influence domain. The
-target may be a canonical input feature, an observed cost value, a symptom, an
-outcome, diagnostic evidence, or risk evidence.
+where $m_j$ is a derived model variable and $\delta(m_j)\in\mathcal{D}$ is its
+influence-domain assignment. The target may be a canonical input feature, an
+observed cost value, a symptom, an outcome, diagnostic evidence, risk evidence,
+or a profiling-policy trigger.
 
-The mapping target matters. A packet-loss metric may become a
-network-condition context feature. Worker reserve and release events may become
-observed worker-slot occupancy. A dependency timeout log may become a symptom or
-outcome. A sustained queue delay may become risk evidence.
+The mapping target matters. A packet-loss metric may become a network-condition
+context feature. Worker reserve and release events may become observed
+worker-slot occupancy. A dependency timeout log may become a symptom if it is
+used as intermediate evidence, or an outcome if it is the terminal result of an
+attempt. A sustained queue delay may become risk evidence when it describes the
+consequence of occupancy or retries.
+
+A single raw observation may map to several variables. For example, a dependency
+timeout record may produce a symptom node, an outcome node, and risk evidence.
+The one-domain rule still applies: each derived variable receives one primary
+domain, and the relations among those variables are represented by graph edges.
+This avoids treating one observation as several independent costs.
 
 Canonical features form the input vector $z_a$. Observed output values such as
-$Y_q(a)$ are not part of $z_a$ for the same attempt; they are produced during or
-after execution and used for residuals, calibration, diagnostics, and future
-model updates.
+$Y_q(a)$ are not part of $z_a$ for the same pre-execution estimate; they are
+produced during or after execution and used for residuals, calibration,
+diagnostics, and future model updates. This separation prevents post-execution
+leakage while still allowing the model to learn from historical attempts.

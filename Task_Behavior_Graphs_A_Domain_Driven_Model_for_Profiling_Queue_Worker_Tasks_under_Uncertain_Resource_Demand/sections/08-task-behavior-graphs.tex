@@ -1,9 +1,9 @@
 \section{Task Behavior Graphs}
 \label{sec:task-behavior-graphs}
 
-The cost model defines typed dimensions and estimators. Influence domains define
-semantic roles. A Task Behavior Graph connects these roles for a task kind or
-task family.
+The cost model defines typed dimensions and estimate objects. Influence domains
+define semantic roles and permitted role flow. A Task Behavior Graph connects
+these roles for a task kind or task family.
 
 For task kind $k$, a Task Behavior Graph is a typed directed graph
 \[
@@ -12,7 +12,7 @@ For task kind $k$, a Task Behavior Graph is a typed directed graph
 \left(
 V_k,
 E_k,
-\delta,
+\delta_k,
 \tau,
 \lambda,
 w,
@@ -20,20 +20,23 @@ w,
 \right).
 \]
 Here $V_k$ is the set of nodes, $E_k\subseteq V_k\times V_k$ is the set of
-directed influence edges, $\delta$ assigns an influence domain to each node,
-$\tau$ assigns a node type, $\lambda$ assigns an edge role, $w$ stores edge
-parameters, and $\gamma$ stores confidence values.
+directed influence edges, $\delta_k:V_k\rightarrow\mathcal{D}$ assigns an
+influence domain to each node, $\tau$ assigns a node type, $\lambda$ assigns an
+edge role, $w$ stores edge parameters, and $\gamma$ stores confidence values.
 
 Nodes represent typed model variables rather than raw metric names. A node may
 represent task identity, an intrinsic feature, an execution-context feature, a
 resource-demand estimate object, a worker-occupancy estimate object, a symptom,
-an outcome, a diagnostic indicator, a risk output, or a profiling-policy
-trigger.
+an outcome, a reliability diagnostic, an operational-risk output, or a
+profiling-policy trigger. Each node has one primary influence domain; if one raw
+observation supports several roles, the mapping layer creates several variables
+before they appear in the graph.
 
-Edges represent modeled influence assumptions. Edge roles include baseline
-influence, contextual amplification, overhead contribution, evidence link,
-symptom link, outcome link, diagnostic link, risk propagation, and policy
-trigger:
+Edges represent modeled influence assumptions and must respect the permitted
+domain-flow relation from Section~\ref{sec:influence-domain-flow}. Edge roles
+include baseline influence, contextual amplification, overhead contribution,
+evidence link, symptom link, outcome link, diagnostic link, risk propagation,
+and policy trigger:
 \[
 \lambda(e)
 \in
@@ -50,18 +53,21 @@ trigger:
 \}.
 \]
 An edge is not proof of causality. It records an explicit assumption used by the
-task-kind model.
+task-kind model. The confidence value $\gamma_e$ records how reliable that
+assumption is considered by the current model state or manifest.
 
 A Task Behavior Graph may implement a dimension-specific estimator $F_{k,q}$,
 parameterize it, or document the influence structure used by a separate
 estimator. The required property is that the graph makes task-kind-specific
-influence assumptions explicit.
+influence assumptions explicit while preserving the role boundaries defined by
+influence domains. In particular, outcome, diagnostic, and risk nodes must not be
+used as pre-execution intrinsic or context inputs for the same attempt.
 
 A replication graph fragment illustrates the structure. The feature
-\texttt{payload\_size\_bytes} may influence \texttt{network\_output\_bytes}
-through a baseline edge. The context feature \texttt{peer\_health} may influence
-\texttt{worker\_slot\_time} through an amplification edge. The context feature
-\texttt{retry\_attempt} may influence \texttt{connection\_hold\_time} and a
-retry diagnostic. The cost node \texttt{worker\_slot\_time} may feed a
-queue-starvation risk node, and that risk node may trigger a tail-aware
-profiling policy.
+\texttt{payload\_size\_bytes} may be an intrinsic node that influences
+\texttt{network\_output\_bytes} through a baseline edge. The context feature
+\texttt{peer\_health} may influence \texttt{worker\_slot\_time} through an
+amplification edge. The context feature \texttt{retry\_attempt} may influence
+\texttt{connection\_hold\_time} and a retry diagnostic. The cost node
+\texttt{worker\_slot\_time} may feed a queue-starvation risk node, and that risk
+node may trigger a tail-aware profiling policy.

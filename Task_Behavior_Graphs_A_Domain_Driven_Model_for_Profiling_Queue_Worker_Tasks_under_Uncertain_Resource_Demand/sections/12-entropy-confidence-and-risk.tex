@@ -4,7 +4,9 @@
 This section treats uncertainty as the primary concept. Entropy is optional and
 only meaningful when a discrete predictive distribution is defined.
 
-Let
+Reliability diagnostics describe the trustworthiness of the current behavior
+estimate. They are downstream from cost estimates and observations, but they are
+not cost dimensions. Let
 \[
 \mathrm{Diag}(a)
 =
@@ -15,9 +17,10 @@ z_a,
 \theta_{k_a}
 \right)
 \]
-denote reliability diagnostics when the required inputs are available.
+denote a structured diagnostic object when the required inputs are available.
 Diagnostics may include residual magnitude, missingness, sample scarcity, drift,
-tail ratio, multimodality, and estimator confidence.
+tail ratio, multimodality, calibration error, and estimator confidence. These
+diagnostics belong to $D_{\mathrm{diag}}$ in the influence-domain system.
 
 Risk is downstream from cost and diagnostics:
 \[
@@ -31,5 +34,14 @@ S(a);
 \right),
 \]
 where $S(a)$ denotes consequence information such as tenant criticality,
-dependency fragility, or queue-starvation impact. Risk is not active resource
-demand and is not worker occupancy.
+dependency fragility, queue-starvation impact, or SLO sensitivity. Risk belongs
+to $D_{\mathrm{risk}}$. It is not active resource demand, not worker occupancy,
+and not merely low confidence. Low confidence can increase risk only when the
+consequence of being wrong is operationally significant.
+
+The separation between diagnostics and risk prevents a common modeling error. A
+large residual says that the model and the observed workload disagreed. It does
+not by itself say that the attempt is dangerous. A high-risk interpretation
+requires consequence information: for example, whether underestimating this
+attempt can starve a queue, overload a dependency, violate an SLO, or amplify a
+retry storm.

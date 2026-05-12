@@ -2,10 +2,12 @@
 \label{sec:profiling-policy-selection}
 
 Profiling policy selection decides how much observation is justified. It
-consumes cost estimates, diagnostics, risk interpretation, and an observation
-budget. It does not decide final scheduling, routing, or placement.
+consumes cost estimates, reliability diagnostics, operational-risk
+interpretation, and an observation budget. It does not decide final scheduling,
+routing, placement, or admission.
 
-Let $\mathcal{P}$ be a set of available policies. A selector may be written as
+Let $\mathcal{P}$ be a set of available profiling policies and let
+$B_{\mathrm{obs}}$ be the observation budget. A selector may be written as
 \[
 \rho(a)
 =
@@ -17,6 +19,15 @@ J_p\!\left(
 B_{\mathrm{obs}}
 \right),
 \]
-where $B_{\mathrm{obs}}$ is the observation budget. A stable low-risk task may
-use minimal accounting. A high-tail or high-residual task may justify detailed
-accounting, tracing, or diagnostic profiling.
+where $J_p$ denotes a policy score or rule predicate. The notation
+$\operatorname*{arg\,select}$ is intentionally more general than an
+optimization operator: a production system may implement policy selection as a
+ranked rule set, a threshold rule, a constrained optimizer, or a controller.
+
+Profiling policies are represented in the influence-domain model as
+$D_{\mathrm{policy}}$ outputs. A stable low-risk task may use minimal
+accounting. A task with high-tail occupancy, systematic residuals, missing
+context, or high consequence may justify detailed accounting, sampled tracing,
+runtime profiling, or diagnostic profiling. The selected policy may affect a
+policy-aware cost estimate through profiling overhead, but it must not alter the
+base cost estimate for the same attempt.

@@ -23,7 +23,22 @@ Symbol & Meaning \\
 \termrow{$k(i) \in \mathcal{K}$}{The task kind of task instance $i$.}
 \termrow{$i(a) \in \mathcal{I}$}{The task instance executed by attempt $a$.}
 \termrow{$k_a$}{A shorthand for $k(i(a))$.}
+
 \termrow{$\mathcal{D}$}{The set of influence domains.}
+\termrow{$D_{\mathrm{id}}$}{The task-identity influence domain.}
+\termrow{$D_{\mathrm{intr}}$}{The intrinsic-feature influence domain.}
+\termrow{$D_{\mathrm{ctx}}$}{The execution-context influence domain.}
+\termrow{$D_{\mathrm{res}}$}{The resource-demand influence domain.}
+\termrow{$D_{\mathrm{occ}}$}{The worker-occupancy influence domain.}
+\termrow{$D_{\mathrm{sym}}$}{The symptom influence domain.}
+\termrow{$D_{\mathrm{out}}$}{The outcome influence domain.}
+\termrow{$D_{\mathrm{diag}}$}{The reliability-diagnostic influence domain.}
+\termrow{$D_{\mathrm{risk}}$}{The operational-risk influence domain.}
+\termrow{$D_{\mathrm{policy}}$}{The profiling-policy trigger influence domain.}
+\termrow{$\delta_k:V_k\rightarrow\mathcal{D}$}{The domain-assignment function for the graph of task kind $k$.}
+\termrow{$\delta(v)$}{The influence domain assigned to node $v$ when the task kind is clear from context.}
+\termrow{$\leadsto_{\mathcal{D}}$}{The permitted domain-flow relation between influence domains.}
+
 \termrow{$\mathcal{Z}_k$}{The canonical input-feature space for task kind $k$.}
 \termrow{$z_a \in \mathcal{Z}_{k_a}$}{The canonical input-feature vector available for attempt $a$.}
 \termrow{$\mathcal{X}_k$}{The intrinsic-feature space for task kind $k$.}
@@ -34,6 +49,7 @@ Symbol & Meaning \\
 \termrow{$\mathbf{c}_a$}{The execution-context projection $P_C^{k_a}(z_a)$.}
 \termrow{$\Theta_k$}{The model-state space for task kind $k$.}
 \termrow{$\theta_k \in \Theta_k$}{Task-kind-specific model state.}
+
 \termrow{$\mathcal{R}$}{The set of active resource-demand dimensions.}
 \termrow{$\mathcal{O}$}{The set of worker-occupancy dimensions.}
 \termrow{$\mathcal{Q}$}{The typed disjoint union $\mathcal{R}\dot{\cup}\mathcal{O}$.}
@@ -66,18 +82,25 @@ Symbol & Meaning \\
 \termrow{$\widehat{O}_q$}{The estimated additive overhead function for dimension $q$.}
 \termrow{$\widehat{\mathbf{C}}_{\mathrm{base}}(a)$}{The cost estimate excluding additional profiling overhead.}
 \termrow{$\widehat{\mathbf{C}}_{\rho}(a)$}{The cost estimate including overhead from profiling policy $\rho$.}
+
 \termrow{$\mathcal{G}_k$}{The Task Behavior Graph associated with task kind $k$.}
 \termrow{$V_k$}{The node set of $\mathcal{G}_k$.}
 \termrow{$E_k$}{The edge set of $\mathcal{G}_k$.}
 \termrow{$v \in V_k$}{A graph node.}
 \termrow{$e \in E_k$}{A graph edge.}
-\termrow{$\delta(v)$}{The influence domain assigned to node $v$.}
 \termrow{$\tau(v)$}{The node type assigned to node $v$.}
 \termrow{$\lambda(e)$}{The edge role assigned to edge $e$.}
 \termrow{$w_e$}{The estimated sensitivity, weight, or parameter associated with edge $e$.}
 \termrow{$\gamma_e$}{The confidence value associated with edge $e$.}
+
 \termrow{$\mathrm{Diag}(a)$}{Reliability diagnostics for attempt $a$.}
+\termrow{$h_{\mathrm{diag}}$}{A diagnostic function that maps cost estimates, residuals, features, and model state to a diagnostic object.}
+\termrow{$S(a)$}{Consequence information for attempt $a$, such as tenant criticality, dependency fragility, or queue-starvation impact.}
 \termrow{$\mathrm{Risk}(a)$}{The operational-risk estimate for attempt $a$.}
+\termrow{$g_{\mathrm{risk}}$}{A risk function that maps cost estimates, diagnostics, consequence information, and model state to operational risk.}
+\termrow{$\mathcal{P}$}{The set of available profiling policies.}
+\termrow{$B_{\mathrm{obs}}$}{The observation budget available to profiling-policy selection.}
+\termrow{$J_p$}{A policy score or rule predicate for profiling policy $p$.}
 \termrow{$\rho(a)$}{The profiling policy selected for attempt $a$ or a comparable class of attempts.}
 
 \end{longtable}

@@ -16,67 +16,85 @@ Term & Definition \\
 \endfoot
 
 \termrow{influence domain}{
-A semantic role assigned to a feature, observation, output, or model concept in
-the task behavior model. Influence domains are not metric domains: they group
-model elements by role rather than by telemetry source.
+A semantic role assigned to a model variable in the task behavior model.
+Influence domains are not metric domains and not telemetry sources: they group
+model elements by role rather than by where a signal was observed.
 }
 
 \termrow{task identity domain}{
 The influence domain containing identifiers and metadata that describe which
 task is being executed, such as task kind, version, queue, tenant, producer,
-priority, and deadline.
+priority, deadline, and attempt number.
 }
 
-\termrow{intrinsic demand domain}{
-The influence domain describing work contained in the task itself, such as
-payload size, record count, object count, partition size, input format,
+\termrow{intrinsic feature domain}{
+The influence domain describing work contained in the task instance itself, such
+as payload size, record count, object count, partition size, input format,
 operation mode, or batch size.
 }
 
 \termrow{execution context domain}{
-The influence domain describing the environment and state under which the task
-attempt executes, such as network condition, dependency health, replica state,
-disk pressure, cache warmth, worker pressure, and retry state.
+The influence domain describing the input-side environment and state under which
+the task attempt executes, such as network condition, dependency health, replica
+state, disk pressure, cache warmth, worker pressure, retry state, and tenant
+pressure.
 }
 
 \termrow{resource demand domain}{
 The influence domain describing active resource dimensions required or consumed
 by the task attempt, such as CPU time, memory peak, disk I/O, network I/O,
 runtime allocations, or accelerator usage. Waiting on dependencies is not
-active resource demand by itself, although it can contribute to worker
-occupancy and operational risk.
+active resource demand by itself, although it can contribute to worker occupancy
+or risk.
 }
 
 \termrow{worker occupancy domain}{
 The influence domain describing bounded execution capacity held by the task
 attempt, such as worker-slot time, lease time, connection hold time, lock hold
-time, semaphore hold time, or tenant concurrency time. Wait-related dimensions
-such as dependency wait time may contribute to this domain when a task keeps
-bounded worker capacity while waiting.
+time, semaphore-permit time, or tenant-concurrency time.
+}
+
+\termrow{symptom domain}{
+The influence domain describing intermediate observed signals that indicate
+abnormal or relevant behavior but are not final outcomes and not cost dimensions
+by themselves. Examples include dependency wait spikes, retry bursts, timeout
+warnings, queue-delay spikes, and lock-contention signals.
 }
 
 \termrow{outcome domain}{
-The influence domain describing how the task attempt completed, such as
-success, failure, timeout, cancellation, retryable error, non-retryable error,
-dead-lettering, or lease expiration.
+The influence domain describing how the task attempt completed or transitioned
+in its lifecycle, such as success, failure, timeout, cancellation, retryable
+error, non-retryable error, dead-lettering, or lease expiration.
 }
 
-\termrow{uncertainty domain}{
-The influence domain describing unreliability or unpredictability in the model
-estimate or behavior profile, such as residual error, drift, variance, tail
-ratio, multimodality, missing features, or low sample count.
+\termrow{reliability diagnostic domain}{
+The influence domain describing estimate reliability and model-quality evidence,
+such as residual magnitude, missing features, sample scarcity, drift, tail ratio,
+multimodality, calibration error, or confidence.
 }
 
 \termrow{risk domain}{
 The influence domain describing the consequence-weighted danger of
 underestimating, misclassifying, or mishandling a task attempt. Examples include
 queue starvation, retry storm, SLO violation, replication lag, tenant impact,
-and cascading overload.
+dependency overload, and cascading overload.
 }
 
-\termrow{profiling observation domain}{
-The influence domain describing what is observed, where it is observed, at what
-detail level, and under which overhead budget.
+\termrow{profiling-policy trigger domain}{
+The influence domain describing variables or decisions that select an
+observation strategy, such as minimal accounting, detailed accounting, sampled
+tracing, tail-aware profiling, or diagnostic profiling.
+}
+
+\termrow{one-domain rule}{
+The rule that each Task Behavior Graph node has one primary influence domain. A
+single raw observation may map to several model variables when it supports
+several roles.
+}
+
+\termrow{anti-double-counting rule}{
+The rule that a signal must be assigned to its model role before it is
+aggregated, scored, or used as evidence for another role.
 }
 
 \end{longtable}

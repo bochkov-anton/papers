@@ -1,9 +1,23 @@
 \section{Influence Domains}
 \label{sec:influence-domains}
 
-Influence domains assign semantic roles to model variables. They prevent the
-model from collapsing input context, observed symptoms, cost outputs,
-diagnostics, risks, and policy triggers into one undifferentiated metric space.
+The cost model in Section~\ref{sec:task-cost-model} defines attempt-attributed
+cost: active resource demand and worker occupancy. A complete task-behavior
+model, however, also contains variables that are not cost outputs: task
+identity, intrinsic work, execution context, symptoms, outcomes, diagnostics,
+risks, and profiling-policy triggers. These variables must not be collapsed into
+one metric space, because they play different roles in estimation, diagnosis,
+risk interpretation, and profiling-policy selection.
+
+Influence domains assign semantic roles to model variables. They are not
+telemetry sources and not metric categories. A metric, span event, log entry,
+queue event, profile sample, or domain event becomes part of the model only
+after it is mapped to a model variable with an assigned influence domain. The
+same raw observation may support more than one model variable, but each graph
+node has one primary role.
+
+\subsection{Domain Set}
+\label{sec:influence-domain-set}
 
 Let
 \[
@@ -20,22 +34,305 @@ D_{\mathrm{out}},
 D_{\mathrm{diag}},
 D_{\mathrm{risk}},
 D_{\mathrm{policy}}
-\}.
+\}
 \]
-The domains represent task identity, intrinsic features, execution context,
-resource demand, worker occupancy, symptoms, outcomes, reliability diagnostics,
-risk, and profiling-policy triggers.
+be the set of influence domains. The domains represent task identity, intrinsic
+features, execution context, resource demand, worker occupancy, symptoms,
+outcomes, reliability diagnostics, operational risk, and profiling-policy
+triggers.
 
-For any graph node $v$, the domain assignment is
+The domains classify roles rather than data sources. For example, a queue event
+may be mapped to an outcome node, a worker lifecycle event may be mapped to an
+occupancy node, and a log entry may be mapped to a symptom node. The mapping
+depends on how the resulting variable is used in the task-behavior model.
+
+\subsection{Domain Assignment}
+\label{sec:influence-domain-assignment}
+
+For a Task Behavior Graph associated with task kind $k$, let $V_k$ be the node
+set. The domain assignment is a typing function
 \[
-\delta(v)\in\mathcal{D}.
+\delta_k : V_k \rightarrow \mathcal{D}.
 \]
-The domain determines how the node may be used. Context nodes may influence cost
-nodes. Cost nodes may feed diagnostics. Diagnostics and outcomes may feed risk.
-Risk and diagnostics may feed policy triggers. These directions are modeling
-constraints, not claims of causal proof.
+When the task kind is clear from context, we write $\delta(v)$ instead of
+$\delta_k(v)$.
 
-The anti-double-counting rule is central. Network instability, dependency wait
-time, retry count, wall-clock duration, and worker-slot time may co-occur. The
-model must represent which signal is context, which is symptom, which is
-observed cost, and which is risk-relevant consequence before any aggregation.
+This function assigns one primary influence domain to each graph node. If a raw
+signal supports several roles, the mapping layer should create several model
+variables rather than assigning several roles to one node. For example, a
+dependency-timeout log entry may support a symptom variable, an attempt-outcome
+variable, and risk evidence, but those roles should be represented by distinct
+nodes:
+\[
+\delta(\texttt{dependency\_timeout\_symptom}) = D_{\mathrm{sym}},
+\]
+\[
+\delta(\texttt{attempt\_timeout\_outcome}) = D_{\mathrm{out}},
+\]
+\[
+\delta(\texttt{retry\_storm\_risk}) = D_{\mathrm{risk}}.
+\]
+This one-domain rule makes graph interpretation and validation explicit.
+
+\subsection{Domain Semantics}
+\label{sec:influence-domain-semantics}
+
+Table~\ref{tab:influence-domain-semantics} summarizes the domains, their roles,
+typical examples, and common confusions. The table is part of the model
+definition: it specifies how variables may be interpreted before they are
+connected by graph edges.
+
+\begingroup
+\renewcommand{\arraystretch}{1.18}
+\setlength{\tabcolsep}{4pt}
+
+\begin{longtable}{
+p{0.12\linewidth}
+p{0.26\linewidth}
+p{0.28\linewidth}
+p{0.24\linewidth}
+}
+\caption{Influence domains and their semantic roles.}
+\label{tab:influence-domain-semantics}\\
+
+\toprule
+Domain & Role & Examples & Common confusion \\
+\midrule
+\endfirsthead
+
+\toprule
+Domain & Role & Examples & Common confusion \\
+\midrule
+\endhead
+
+\bottomrule
+\endfoot
+
+$D_{\mathrm{id}}$ &
+Identifies which task is being modeled and selects reusable task-kind
+structure. &
+task kind, task version, queue, tenant, producer, priority, deadline &
+Identity selects a model; it is not a cost value. \\
+
+$D_{\mathrm{intr}}$ &
+Describes work contained in the task instance. &
+payload size, record count, object count, batch size, partition size, operation
+mode &
+Intrinsic work is not execution context. \\
+
+$D_{\mathrm{ctx}}$ &
+Describes the environment and state under which the attempt executes. &
+dependency health, network condition, disk pressure, cache state, worker-pool
+pressure, retry state &
+Context may influence cost, but it is not an attempt-attributed cost output. \\
+
+$D_{\mathrm{res}}$ &
+Describes active resource demand or observed active resource usage attributed to
+the attempt. &
+CPU time, memory peak, allocation volume, disk I/O, network I/O, accelerator
+time &
+Resource demand is not bounded-capacity occupancy. \\
+
+$D_{\mathrm{occ}}$ &
+Describes bounded execution capacity held by the attempt over time. &
+worker-slot time, lease time, connection hold time, lock hold time,
+semaphore-permit time &
+Occupancy is not wall-clock duration by itself. \\
+
+$D_{\mathrm{sym}}$ &
+Describes an intermediate observed signal that indicates relevant or abnormal
+behavior. &
+dependency wait spike, retry burst, lock-contention signal, queue-delay spike &
+A symptom is not necessarily the root cause or final outcome. \\
+
+$D_{\mathrm{out}}$ &
+Describes how the attempt completed. &
+success, failure, timeout, cancellation, retryable error, dead-lettering, lease
+expiration &
+An outcome is not a cost value by itself. \\
+
+$D_{\mathrm{diag}}$ &
+Describes reliability of estimates or model fit. &
+residual magnitude, missingness, low sample count, drift, tail ratio,
+multimodality, confidence &
+A diagnostic is not an operational consequence by itself. \\
+
+$D_{\mathrm{risk}}$ &
+Describes consequence-weighted operational danger. &
+queue starvation, retry storm, SLO violation, replication lag, tenant impact,
+cascading overload &
+Risk is not active resource demand or worker occupancy. \\
+
+$D_{\mathrm{policy}}$ &
+Describes a profiling-policy trigger or observation response. &
+minimal accounting, detailed accounting, tracing, tail-aware profiling,
+diagnostic profiling &
+A profiling-policy trigger is not a scheduling or placement decision. \\
+
+\end{longtable}
+\endgroup
+
+\subsection{Permitted Domain Flow}
+\label{sec:influence-domain-flow}
+
+The domain assignment constrains graph edges. Let
+\[
+\leadsto_{\mathcal{D}}
+\subseteq
+\mathcal{D}\times\mathcal{D}
+\]
+denote the permitted domain-flow relation. If $(u,v)\in E_k$, then the edge is
+well typed only when
+\[
+\delta_k(u)\leadsto_{\mathcal{D}}\delta_k(v).
+\]
+This condition does not prove causality. It only states that a graph edge uses
+the source variable in an admissible role relative to the target variable.
+
+Typical permitted flows are:
+\[
+D_{\mathrm{id}}
+\leadsto_{\mathcal{D}}
+D_{\mathrm{intr}},\,
+D_{\mathrm{ctx}},\,
+D_{\mathrm{res}},\,
+D_{\mathrm{occ}},\,
+D_{\mathrm{policy}},
+\]
+because identity can select task-kind structure, relevant features, relevant
+cost dimensions, and policy priors.
+
+Intrinsic features and execution context may influence cost estimates:
+\[
+D_{\mathrm{intr}},\,D_{\mathrm{ctx}}
+\leadsto_{\mathcal{D}}
+D_{\mathrm{res}},\,D_{\mathrm{occ}}.
+\]
+For example, payload size may influence network output bytes, while dependency
+health may influence worker-slot time or connection hold time.
+
+Context may also influence symptoms and outcomes:
+\[
+D_{\mathrm{ctx}}
+\leadsto_{\mathcal{D}}
+D_{\mathrm{sym}},\,D_{\mathrm{out}}.
+\]
+For example, degraded dependency health may be associated with dependency-wait
+symptoms or timeout outcomes.
+
+Cost, symptoms, and outcomes may feed diagnostics or risk interpretation:
+\[
+D_{\mathrm{res}},\,D_{\mathrm{occ}},\,D_{\mathrm{sym}},\,D_{\mathrm{out}}
+\leadsto_{\mathcal{D}}
+D_{\mathrm{diag}},\,D_{\mathrm{risk}}.
+\]
+For example, a large worker-slot residual may feed reliability diagnostics, and
+a timeout outcome may feed retry-storm risk.
+
+Diagnostics and risk may feed profiling-policy triggers:
+\[
+D_{\mathrm{diag}},\,D_{\mathrm{risk}}
+\leadsto_{\mathcal{D}}
+D_{\mathrm{policy}}.
+\]
+For example, low confidence together with high queue-starvation risk may trigger
+tail-aware profiling.
+
+Some flows are restricted. Outcomes and diagnostics for attempt $a$ may update
+task-kind state for future attempts, but they must not be used as pre-execution
+input features for the same attempt. Otherwise, the graph would leak
+post-execution information into the estimate it is supposed to produce. In
+particular, observed values, residuals, and final outcomes for attempt $a$ must
+not be folded back into $z_a$ for the same pre-execution estimate.
+
+\subsection{Ambiguous Signals}
+\label{sec:influence-domain-ambiguous-signals}
+
+Some operational signals are ambiguous until the model assigns a role. Duration,
+retry count, timeout, and queue delay are common examples.
+
+A duration signal may represent different roles. Attributed CPU duration belongs
+to $D_{\mathrm{res}}$. Worker-slot time belongs to $D_{\mathrm{occ}}$.
+Dependency wait time is often a symptom in $D_{\mathrm{sym}}$, unless a
+descriptor explicitly defines it as an occupancy dimension. Elapsed wall-clock
+duration is usually an outcome-related observation, not worker occupancy by
+itself.
+
+A retry-count signal may also have several roles. The attempt number available
+before execution may be execution context. A burst of retries observed during
+execution may be a symptom. A retry scheduled after failure may be an outcome. A
+high retry count may also be evidence for retry-storm risk. These roles should
+not be represented by one overloaded graph node.
+
+This distinction is important because the same raw observation can enter the
+model through several typed variables:
+\[
+s
+\mapsto
+\{v_1,\ldots,v_m\},
+\qquad
+\delta_k(v_j)\in\mathcal{D}.
+\]
+The mapping layer may derive several variables from one raw signal, but the
+graph layer keeps their roles separate.
+
+\subsection{Anti-Double-Counting Rule}
+\label{sec:influence-domain-anti-double-counting}
+
+The anti-double-counting rule is central: variables that describe the same
+incident must not be aggregated as if they were independent additive costs.
+Network instability, dependency wait time, retry count, wall-clock duration,
+connection hold time, and worker-slot time may all appear during one degraded
+attempt. They do not have the same role.
+
+Consider an attempt that runs during packet loss and waits thirty seconds on a
+degraded dependency. The incident may produce the following variables:
+\[
+\delta(\texttt{network\_condition}) = D_{\mathrm{ctx}},
+\]
+\[
+\delta(\texttt{dependency\_wait\_spike}) = D_{\mathrm{sym}},
+\]
+\[
+\delta(\texttt{retry\_count}) \in \{D_{\mathrm{ctx}},D_{\mathrm{sym}},D_{\mathrm{out}}\},
+\]
+depending on whether retry count is used as pre-execution attempt state, an
+observed retry burst, or a completion result,
+\[
+\delta(\texttt{wall\_clock\_duration}) = D_{\mathrm{out}},
+\]
+\[
+\delta(\texttt{worker\_slot\_time}) = D_{\mathrm{occ}},
+\]
+and
+\[
+\delta(\texttt{queue\_starvation\_risk}) = D_{\mathrm{risk}}.
+\]
+
+Only some of these variables are cost dimensions. Network condition is context.
+Dependency wait is a symptom unless it is explicitly modeled as a held-capacity
+dimension. Wall-clock duration is an elapsed outcome. Worker-slot time is
+occupancy only for intervals during which the worker slot is held. Queue
+starvation is a consequence, not an additional resource-demand dimension.
+
+The model must assign roles before aggregation. This prevents a single
+underlying incident from being counted once as context, again as a symptom,
+again as duration, again as occupancy, and again as risk. Role assignment does
+not remove the relationships between these variables; it makes those
+relationships explicit.
+
+\subsection{Boundaries}
+\label{sec:influence-domain-boundaries}
+
+Influence domains define how model variables may be interpreted and connected.
+They do not define the cost estimator, do not map raw telemetry into canonical
+features, do not compute uncertainty or risk, do not select the profiling policy,
+and do not prove causality. Those responsibilities belong to later sections.
+
+The role of this section is narrower: it provides the typing discipline used by
+Task Behavior Graphs. Section~\ref{sec:task-behavior-graphs} uses the domain
+assignment to connect typed variables into task-kind-specific graphs.
+Section~\ref{sec:metrics-signals-features} explains how raw observations are
+mapped into model variables. Sections~\ref{sec:entropy-confidence-risk} and
+\ref{sec:profiling-policy-selection} consume cost estimates, diagnostics, and
+risk to reason about reliability and observation policy.

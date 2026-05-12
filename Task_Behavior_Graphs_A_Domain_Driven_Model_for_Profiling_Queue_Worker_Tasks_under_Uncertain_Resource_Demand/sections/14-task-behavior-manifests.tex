@@ -2,17 +2,30 @@
 \label{sec:task-behavior-manifests}
 
 Task Behavior Manifests provide a declarative bridge between the model and
-implementation. A manifest declares task classes, canonical features, cost
-dimensions, observation mappings, graph fragments, diagnostics, and profiling
-policies.
+implementation. A manifest declares task classes or task kinds, canonical
+features, cost dimensions, observation mappings, graph fragments, diagnostics,
+risk rules, and profiling policies.
 
-A replication manifest may declare \texttt{payload\_size\_bytes},
-\texttt{peer\_health}, \texttt{network\_condition}, and
-\texttt{retry\_attempt} as features; \texttt{network\_output\_bytes},
-\texttt{disk\_read\_bytes}, \texttt{worker\_slot\_time}, and
-\texttt{connection\_hold\_time} as cost dimensions; and graph edges from
-payload size to network output, from peer health to worker-slot time, and from
-retry state to connection-hold time.
+The manifest layer uses the terminology defined in the previous sections. A
+feature declaration must identify whether the variable is intrinsic work or
+execution context. A cost-dimension declaration must provide or reference a
+descriptor $\Delta_q$. A graph node must have one influence-domain assignment.
+A graph edge must respect the permitted domain-flow relation unless the manifest
+explicitly marks the edge as implementation-specific and outside the base
+behavior model.
+
+A replication manifest may declare \texttt{payload\_size\_bytes} as an
+intrinsic feature, \texttt{peer\_health}, \texttt{network\_condition}, and
+\texttt{retry\_attempt} as context features, \texttt{network\_output\_bytes}
+and \texttt{disk\_read\_bytes} as resource-demand dimensions, and
+\texttt{worker\_slot\_time} and \texttt{connection\_hold\_time} as
+worker-occupancy dimensions. It may then declare graph edges from payload size
+to network output, from peer health to worker-slot time, from retry state to
+connection-hold time, from residual diagnostics to retry-storm risk, and from
+risk to a tail-aware profiling policy.
 
 Manifests allow domain packs to extend the model without requiring the core
-system to know all possible domain metrics in advance.
+system to know all possible domain metrics in advance. The core requirement is
+not that every metric be predefined, but that every introduced variable has a
+role, every cost dimension has a descriptor, and every graph edge has a
+semantically valid interpretation.
